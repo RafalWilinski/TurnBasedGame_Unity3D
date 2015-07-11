@@ -6,16 +6,17 @@ public class Unit : MonoBehaviour {
 
     public int teamNumber;
     public float health;
+    public Transform tileOwned;
+    public AnimationCurve moveAnimCurve;
 
     private Transform myTransform;
     private Renderer myRenderer;
 
     public void AssignValues(int team, Transform tile) {
-
-        this.teamNumber = team;
         int retryCount = 0;
 
         myTransform = transform;
+        teamNumber = team;
 
         if(tile.GetComponent<HexUnit>().ReserveHex(this)) {
             Debug.Log("Hex reserved!");
@@ -34,6 +35,17 @@ public class Unit : MonoBehaviour {
             tile.GetComponent<HexUnit>().ReserveHex(this);
             myTransform.position = tile.position + new Vector3(0, 3.5f, 0);
         }
+
+        tileOwned = tile;
+    }
+
+    public void MoveToTile(Transform newTile) {
+    	tileOwned.GetComponent<HexUnit>().FreeHex();
+    	tileOwned = newTile;
+    	tileOwned.GetComponent<HexUnit>().ReserveHex(this);
+
+    	//This is for noobs!
+    	//myTransform.position = tileOwned.position + new Vector3(0, 3.5f, 0);
     }
 
     void Start () {

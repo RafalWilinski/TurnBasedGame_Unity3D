@@ -49,6 +49,13 @@ public class CameraController : MonoBehaviour {
 		    else if(Input.GetKey(KeyCode.E)) {
 		    	cameraTransform.Rotate(new Vector3(0, 1, 0) * cameraRotationSpeed, Space.World);
 		    }
+
+		    if(Input.GetKey(KeyCode.W)) {
+		    	cameraTransform.Rotate(new Vector3(-1, 0, 0) * cameraRotationSpeed, Space.Self);
+		    }
+		    else if(Input.GetKey(KeyCode.S)) {
+		    	cameraTransform.Rotate(new Vector3(1, 0, 0) * cameraRotationSpeed, Space.Self);
+		    }
 		}
 	}
 

@@ -46,20 +46,6 @@
 	</Reference>
   </ItemGroup>
   <ItemGroup>
-     <Compile Include="Assets\AstarPathfindingProject\Editor\AnimationLinkEditor.cs" />
-     <Compile Include="Assets\AstarPathfindingProject\Editor\AstarPathEditor.cs" />
-     <Compile Include="Assets\AstarPathfindingProject\Editor\AstarUpdateWindow.cs" />
-     <Compile Include="Assets\AstarPathfindingProject\Editor\EditorGUIx.cs" />
-     <Compile Include="Assets\AstarPathfindingProject\Editor\EditorUtilities.cs" />
-     <Compile Include="Assets\AstarPathfindingProject\Editor\GraphEditors\GraphEditor.cs" />
-     <Compile Include="Assets\AstarPathfindingProject\Editor\GraphEditors\GridGeneratorEditor.cs" />
-     <Compile Include="Assets\AstarPathfindingProject\Editor\GraphEditors\NavMeshGeneratorEditor.cs" />
-     <Compile Include="Assets\AstarPathfindingProject\Editor\GraphEditors\PointGeneratorEditor.cs" />
-     <Compile Include="Assets\AstarPathfindingProject\Editor\GraphUpdateSceneEditor.cs" />
-     <Compile Include="Assets\AstarPathfindingProject\Editor\Misc\AstarEnumFlagDrawer.cs" />
-     <Compile Include="Assets\AstarPathfindingProject\Editor\ModifierEditors\RaycastModifierEditor.cs" />
-     <Compile Include="Assets\AstarPathfindingProject\Editor\ModifierEditors\SmoothModifierEditor.cs" />
-     <Compile Include="Assets\AstarPathfindingProject\Editor\SeekerEditor.cs" />
      <Compile Include="Assets\Editor\ImageEffects\AntialiasingEditor.cs" />
      <Compile Include="Assets\Editor\ImageEffects\BloomAndFlaresEditor.cs" />
      <Compile Include="Assets\Editor\ImageEffects\BloomEditor.cs" />
@@ -83,7 +69,6 @@
      <None Include="Assets\Standard Assets\Effects\ToonShading\Shaders\ToonBasic.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Distortion_FishEye.shader" />
      <None Include="Assets\Standard Assets\Effects\ImageEffects\Shaders\_DepthOfField\SeparableWeightedBlurDof34.shader" />
-     <None Include="Assets\AstarPathfindingProject\Editor\EditorAssets\Materials\Navmesh2.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Vision_Tunnel.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_FX_Mirror.shader" />
      <None Include="Assets\Standard Assets\Effects\ImageEffects\Shaders\ShowAlphaChannel.shader" />
@@ -109,7 +94,6 @@
      <None Include="Assets\SSAO Pro\Resources\SSAOPro_v2.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Drawing_Manga3.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_TV_ARCADE.shader" />
-     <None Include="Assets\AstarPathfindingProject\Plugins\DotNetZip\License.txt" />
      <None Include="Assets\Standard Assets\Effects\ImageEffects\Shaders\_BloomAndFlares\VignetteShader.shader" />
      <None Include="Assets\Standard Assets\Effects\ImageEffects\Shaders\_DepthOfField\DepthOfFieldScatter.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Film_Grain.shader" />
@@ -128,7 +112,6 @@
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Pixelisation_OilPaint.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Antialiasing_FXAA.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_FX_ZebraColor.shader" />
-     <None Include="Assets\AstarPathfindingProject\ExampleScenes\Materials\Projector Multiply.shader" />
      <None Include="Assets\Standard Assets\Effects\ImageEffects\Shaders\Contrast Stretch\MinMaxReduction.shader" />
      <None Include="Assets\AmplifyMotion\Resources\Dilation.shader" />
      <None Include="Assets\Standard Assets\Effects\ImageEffects\Shaders\_Antialiasing\SSAA.shader" />
@@ -158,17 +141,14 @@
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Blur_BlurHole.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Special_Bubble.shader" />
      <None Include="Assets\AmplifyMotion\Resources\Shared.cginc" />
-     <None Include="Assets\AstarPathfindingProject\ExampleScenes\Materials\DiffuseAlwaysVisible.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Oculus_NightVision3.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_FX_Funk.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_FX_Screens.shader" />
      <None Include="Assets\AmplifyMotion\Resources\SolidVectorsMobile.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_AAA_SuperHexagon.shader" />
-     <None Include="Assets\AstarPathfindingProject\Plugins\dependencies.txt" />
      <None Include="Assets\SSAO Pro\Changelog.txt" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Blur_Regular.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Blur_Radial.shader" />
-     <None Include="Assets\AstarPathfindingProject\ExampleScenes\_Example Scenes.txt" />
      <None Include="Assets\SSAO Pro\Resources\SSAOPro.cginc" />
      <None Include="Assets\Standard Assets\Effects\ToonShading\Shaders\ToonBasicOutline.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_FX_Drunk2.shader" />
@@ -196,7 +176,6 @@
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Distortion_Half_Sphere.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Edge_Edge_filter.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Light_Water2.shader" />
-     <None Include="Assets\AstarPathfindingProject\Readme_upgrading.txt" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_FX_Drunk.shader" />
      <None Include="Assets\Standard Assets\Effects\ImageEffects\Shaders\ChromaticAberrationShader.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_FX_8bits.shader" />
@@ -208,7 +187,6 @@
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Edge_Neon.shader" />
      <None Include="Assets\Standard Assets\Effects\ImageEffects\Shaders\ColorCorrectionSelective.shader" />
      <None Include="Assets\Standard Assets\Effects\ImageEffects\Shaders\_DepthOfField\Bokeh34.shader" />
-     <None Include="Assets\AstarPathfindingProject\ExampleScenes\Materials\Projector Light.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_TV_ARCADE_2.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Distortion_Flush.shader" />
      <None Include="Assets\AmplifyMotion\Resources\ClothVectorsMobile.shader" />
@@ -223,7 +201,6 @@
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Distortion_BigFace.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_FX_InverChromiLum.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_FX_8bits_gb.shader" />
-     <None Include="Assets\AstarPathfindingProject\Readme.txt" />
      <None Include="Assets\Standard Assets\Effects\Projectors\Shaders\ProjectorLight.shader" />
      <None Include="Assets\Standard Assets\Effects\ImageEffects\Shaders\_BloomAndFlares\MultiPassHollywoodFlares.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Color_Sepia.shader" />
@@ -265,7 +242,6 @@
      <None Include="Assets\Standard Assets\Effects\ImageEffects\Shaders\VignettingShader.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_TV_Vcr.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Drawing_Manga_Color.shader" />
-     <None Include="Assets\AstarPathfindingProject\Plugins\JsonFx\License.txt" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Color_Contrast.shader" />
      <None Include="Assets\Standard Assets\Effects\ImageEffects\Shaders\Tonemapper.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Color_Noise.shader" />
@@ -276,7 +252,6 @@
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Edge_Sigmoid.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_TV_Old_Movie.shader" />
      <None Include="Assets\Standard Assets\Effects\ImageEffects\Shaders\_Antialiasing\FXAA2.shader" />
-     <None Include="Assets\AstarPathfindingProject\Plugins\JsonFx\Readme.txt" />
      <None Include="Assets\AmplifyMotion\Resources\SolidVectors.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Distortion_Wave_Horizontal.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_FX_Ascii.shader" />
@@ -309,7 +284,6 @@
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Colors_Threshold.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_TV_CompressionFX.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Color_Chromatic_Aberration.shader" />
-     <None Include="Assets\AstarPathfindingProject\link.xml" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Drawing_Laplacian.shader" />
      <None Include="Assets\AmplifyMotion\Resources\SkinnedVectorsMobile.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_Distortion_BlackHole.shader" />
@@ -335,12 +309,6 @@
  </Reference>
  <Reference Include="AmplifyMotion">
  <HintPath>/Users/rafal/Unity Projects/TurnBasedGame_CDProjekt/Assets/AmplifyMotion/Plugins/AmplifyMotion.dll</HintPath>
- </Reference>
- <Reference Include="Pathfinding.Ionic.Zip.Reduced">
- <HintPath>/Users/rafal/Unity Projects/TurnBasedGame_CDProjekt/Assets/AstarPathfindingProject/Plugins/DotNetZip/Pathfinding.Ionic.Zip.Reduced.dll</HintPath>
- </Reference>
- <Reference Include="Pathfinding.JsonFx">
- <HintPath>/Users/rafal/Unity Projects/TurnBasedGame_CDProjekt/Assets/AstarPathfindingProject/Plugins/JsonFx/Pathfinding.JsonFx.dll</HintPath>
  </Reference>
  <Reference Include="UnityEditor.Graphs">
  <HintPath>/Applications/Unity/Unity.app/Contents/Frameworks/Managed/UnityEditor.Graphs.dll</HintPath>

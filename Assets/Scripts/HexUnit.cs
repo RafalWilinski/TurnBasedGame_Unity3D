@@ -5,26 +5,34 @@ public class HexUnit : MonoBehaviour {
 
 	public Color mouseOverColor;
 	public Color availableColor;
-	public Color unavailableColor;
+	public Color mountainColor;
 	public Color availableToMoveColor;
-	public Color enemyOnHexColor;
 	
 	public float fadeDelay;
-
-	private bool isMouseOver;
-	private Color oldColor;
-	private Renderer renderer;
 	private bool isReserved = false;
+	private bool isMouseOver;
+	public bool isAvailableForMovement;
+
+	private Color oldColor;
+	private Renderer myRenderer;
 	private Unit hexOwner;
 
 	private void Awake() {
-		renderer = GetComponent<Renderer>();
+		myRenderer = GetComponent<Renderer>();
+	}
+
+	private void OnEnable() {
+		GameScenario.OnClearTilesSelection += DeselectTile;
+	}
+
+	private void OnDisable() {
+		GameScenario.OnClearTilesSelection -= DeselectTile;
 	}
 
 	public void HighlightMouseover() {
 
 		if(!isMouseOver) {
-			renderer.material.color = mouseOverColor;
+			myRenderer.material.color = mouseOverColor;
 		}
 
 		StopCoroutine("CheckMouseOver");
@@ -33,22 +41,31 @@ public class HexUnit : MonoBehaviour {
 	}
 
 	public void AvailableForMovement() {
-		renderer.material.color = availableToMoveColor;
+		if(!isReserved) {
+			isAvailableForMovement = true;
+			myRenderer.material.color = availableToMoveColor;
+		}
+	}
+
+	private void DeselectTile() {
+		isAvailableForMovement = false;
+		RevertToNormal();
 	}
 
 	public void RevertToNormal() {
 		if(isReserved)
-			renderer.material.color = GameScenario.Instance.teams[hexOwner.teamNumber].teamColor;
+			myRenderer.material.color = GameScenario.Instance.teams[hexOwner.teamNumber].teamColor;
+		else if(isAvailableForMovement) 
+			myRenderer.material.color = availableToMoveColor;
 		else 
-			renderer.material.color = availableColor;
+			myRenderer.material.color = availableColor;
 	}
 
 	IEnumerator CheckMouseOver() {
 		yield return new WaitForSeconds(fadeDelay);
 		isMouseOver = false;
 
-		if(isReserved) renderer.material.color = GameScenario.Instance.teams[hexOwner.teamNumber].teamColor;
-		else renderer.material.color = availableColor;
+		RevertToNormal();
 	}
 
 	public bool ReserveHex(Unit u) {
@@ -56,13 +73,13 @@ public class HexUnit : MonoBehaviour {
 		if(isReserved) return false;
 		else {
 			isReserved = true;
-			renderer.material.color = GameScenario.Instance.teams[hexOwner.teamNumber].teamColor;
-			return true;
+			GetComponent<Renderer>().material.color = GameScenario.Instance.teams[hexOwner.teamNumber].teamColor;
+			return myRenderer;
 		}
 	}
 
 	public void FreeHex() {
 		isReserved = false;
-		renderer.material.color = availableColor;
+		myRenderer.material.color = availableColor;
 	}
 }

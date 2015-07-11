@@ -3,160 +3,281 @@ using System;
 using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
-using Pathfinding;
+using UnityEngine.EventSystems;
 
 public class GameScenario : MonoBehaviour {
 
-	public TerrainGenerator terrainGen;
-	public GameObject unitPrefab;
-	public CameraController camControl;
+    //Referencies
+    public TerrainGenerator terrainGen;
+    public GameObject unitPrefab;
+    public CameraController camControl;
 
-	//Game Settings
-	public Vector3 unitSpawnOffset;
-	public float turnTime;
-	public float unitsSpawnSpread;
-	public int unitsPerTeam;
-	public int actionBudget;
-	public int maxTraverseDistance;
+    //Game Settings
+    public Vector3 unitSpawnOffset;
+    public float turnTime;
+    public float unitsSpawnSpread;
+    public int unitsPerTeam;
+    public int actionBudget;
+    public int maxTraverseDistance;
 
-	public Text timeLeftLabel;
-	public Text timerLabel;
+    public Text timeLeftLabel;
+    public Text timerLabel;
+    public CanvasGroup unitControllerCanvas;
 
-	//In-Game variables
-	public int activePlayer;
-	public int turnNumber;
+    //In-Game variables
+    public int activePlayer;
+    public int activeUnit;
+    public int turnNumber;
+    public SelectedMode actionMode = SelectedMode.None;
 
-	[Serializable]
-	public class Team {
-		public List<Unit> units;
-		public Color teamColor;
-		public Logic logicType;
+    public enum SelectedMode {
+        None,
+        Move,
+        Attack,
+        Bomb,
+        Rise
+    }
 
-		public enum Logic {
-			Human,
-			AI
-		}
-	}
+    [Serializable]
+    public class Team {
+        public List<Unit> units;
+        public Color teamColor;
+        public Logic logicType;
 
-	public List<Team> teams;
+        public enum Logic {
+            Human,
+            AI
+        }
+    }
 
-	//Singleton
-	private static GameScenario _instance;
-	public static GameScenario Instance {
-		get {
-			return _instance; //A bit unsafe but we assign _instance at start so theres nothing to worry about
-		}
-	}
+    public List<Team> teams;
 
-	void Start () {
-		_instance = this;
-		GameStart();
+    //Singleton
+    private static GameScenario _instance;
+    public static GameScenario Instance {
+        get {
+            return _instance; //A bit unsafe but we assign _instance at start so theres nothing to worry about
+        }
+    }
 
-		timerLabel.text = "Preparing level...";
-		HideTimeLeftLabel();
-	}
-	
-	private void GameStart() {
-		StartCoroutine("UpdateGridAfterDelay");
-	}
+    public delegate void ClearTilesSelection();
+    public static event ClearTilesSelection OnClearTilesSelection;
 
-	private void HideTimeLeftLabel() {
-		timeLeftLabel.color = new Color(1,1,1,0);
-	}
+    void Start () {
+        _instance = this;
+        GameStart();
 
-	private void ShowTimeLeftLabel() {
-		timeLeftLabel.color = new Color(1,1,1,1);
-	}
+        timerLabel.text = "Preparing level...";
+        HideTimeLeftLabel();
+    }
 
-	IEnumerator UpdateGridAfterDelay() {
-		for(int i = 0; i < 100; i++) {
-			terrainGen.perlinAmplify += 1 / (i + 1f) ;
-			yield return new WaitForSeconds(0.0333f);
-		}
+    private void GameStart() {
+        StartCoroutine("UpdateGridAfterDelay");
+    }
 
-		yield return new WaitForSeconds(0.5f);
-		Debug.Log("Rescan...");
-		AstarPath.active.Scan();
+    private void HideTimeLeftLabel() {
+        timeLeftLabel.color = new Color(1, 1, 1, 0);
+    }
 
-		CreateGameTeams();
-	}
+    private void ShowTimeLeftLabel() {
+        timeLeftLabel.color = new Color(1, 1, 1, 1);
+    }
 
-	private void CreateGameTeams() {
-		Vector3 previousPos = Vector3.zero;
+    IEnumerator UpdateGridAfterDelay() {
+        yield return new WaitForSeconds(1f);
 
-		for(int i = 0; i < teams.Count; i++) {
-			float xCap = TerrainGenerator.Instance.hexWidthSpacing * TerrainGenerator.Instance.levelWidth * 0.9f;
-			float zCap = TerrainGenerator.Instance.hexHeightSpacing * TerrainGenerator.Instance.levelHeight * 0.9f;
+        for(int i = 0; i < 100; i++) {
+            terrainGen.perlinAmplify += 1 / (i + 1f) ;
+            yield return new WaitForSeconds(0.0333f);
+        }
 
-			int spawnOriginTile;
-			if(i == 0) spawnOriginTile = (int) UnityEngine.Random.Range(TerrainGenerator.Instance.levelHeight, TerrainGenerator.Instance.levelHeight * 2);
-			else spawnOriginTile = (int) UnityEngine.Random.Range(TerrainGenerator.Instance.levelHeight * (TerrainGenerator.Instance.levelHeight - 4), TerrainGenerator.Instance.levelHeight * (TerrainGenerator.Instance.levelHeight - 1));
+        yield return new WaitForSeconds(0.5f);
+        Debug.Log("Rescan...");
+        //AstarPath.active.Scan();
 
-			Transform spawnOriginHex = TerrainGenerator.Instance.hexes[spawnOriginTile];
-			Vector3 teamSpawnOrigin = spawnOriginHex.position;
+        CreateGameTeams();
+    }
 
-			// Vector3 teamSpawnOrigin = new Vector3(UnityEngine.Random.Range(0, xCap), 10, UnityEngine.Random.Range(0, zCap));
-			// if(i >= 1) {
-			// 	while(Vector3.Distance(previousPos, teamSpawnOrigin) < 20) {
-			// 		Debug.Log("Teams placed too tight, reshuffle!");
-			// 		teamSpawnOrigin = new Vector3(UnityEngine.Random.Range(0, xCap), 10, UnityEngine.Random.Range(0, zCap));
-			// 	}
-			// }
+    private void CreateGameTeams() {
+        for(int i = 0; i < teams.Count; i++) {
 
-			// previousPos = teamSpawnOrigin;
+            int spawnOriginTile;
+            if(i == 0) spawnOriginTile = (int) UnityEngine.Random.Range(TerrainGenerator.Instance.levelHeight, TerrainGenerator.Instance.levelHeight * 2);
+            else spawnOriginTile = (int) UnityEngine.Random.Range(TerrainGenerator.Instance.levelHeight * (TerrainGenerator.Instance.levelHeight - 4), TerrainGenerator.Instance.levelHeight * (TerrainGenerator.Instance.levelHeight - 1));
 
-			for(int j = 0; j < unitsPerTeam; j++) {
-				// Vector3 spawnVariation = new Vector3(UnityEngine.Random.Range(-unitsSpawnSpread, unitsSpawnSpread), 
-				// 	0, UnityEngine.Random.Range(-unitsSpawnSpread,unitsSpawnSpread));
-					
-				Vector3 spawnPos = TerrainGenerator.Instance.GetNextFreeHex(TerrainGenerator.Instance.hexes[spawnOriginTile]).position;
+            Transform spawnOriginHex = TerrainGenerator.Instance.hexes[spawnOriginTile];
 
-				Unit u = ((GameObject) Instantiate(unitPrefab, spawnPos + unitSpawnOffset, Quaternion.identity)).GetComponent<Unit>();
+            for(int j = 0; j < unitsPerTeam; j++) {
 
-				u.AssignValues(i, spawnOriginHex);
+                Vector3 spawnPos = TerrainGenerator.Instance.GetNextFreeHex(TerrainGenerator.Instance.hexes[spawnOriginTile]).position;
 
-				teams[i].units.Add(u);
-			}
-		}
+                Unit u = ((GameObject) Instantiate(unitPrefab, spawnPos + unitSpawnOffset, Quaternion.identity)).GetComponent<Unit>();
 
-		NextTurn();
-	}
+                u.AssignValues(i, spawnOriginHex);
 
-	private void StartExpirationTimer() {
-		StopCoroutine("TurnExpirationTimer");
-		StartCoroutine("TurnExpirationTimer");
-	}
+                teams[i].units.Add(u);
+            }
+        }
 
-	IEnumerator TurnExpirationTimer() {
+        NextTurn();
+    }
 
-		float timeLeft = turnTime;
+    private void StartExpirationTimer() {
+        StopCoroutine("TurnExpirationTimer");
+        StartCoroutine("TurnExpirationTimer");
+    }
 
-		HideTimeLeftLabel();
-		timerLabel.text = "Player "+activePlayer+" turn!";
+    IEnumerator TurnExpirationTimer() {
 
-		yield return new WaitForSeconds(3f);
+        float timeLeft = turnTime;
 
-		ShowTimeLeftLabel();
-		while(timeLeft > 0f) {
-			yield return new WaitForEndOfFrame();
-			timeLeft -= Time.deltaTime;
-			timerLabel.text = "0:"+timeLeft.ToString("f2").Replace(".", ":");
-		}
+        HideTimeLeftLabel();
+        timerLabel.text = "Player " + (activePlayer + 1) + " turn!";
 
-		timeLeftLabel.color = new Color(1,1,1,1);
-		Debug.Log("Turn is over!");
+        yield return new WaitForSeconds(3f);
 
-		NextTurn();
-	}
+        ShowTimeLeftLabel();
+        while(timeLeft > 0f) {
+            yield return new WaitForEndOfFrame();
+            timeLeft -= Time.deltaTime;
+            timerLabel.text = "0:" + timeLeft.ToString("f2").Replace(".", ":");
+        }
 
-	private void NextTurn() {
-		if(activePlayer == -1) activePlayer = 0;
-		else if(activePlayer == 0) activePlayer = 1;
-		else if(activePlayer == 1) activePlayer = 0;
+        timeLeftLabel.color = new Color(1, 1, 1, 1);
+        Debug.Log("Turn is over!");
 
-		StartExpirationTimer();
+        NextTurn();
+    }
 
-		Unit u = teams[activePlayer].units[0];
-		camControl.FlyOverPosition(u.transform.position);
-	}
+    private void NextTurn() {
+
+    	OnClearTilesSelection();
+
+        if(activePlayer == -1) {
+            activePlayer = 0;
+            unitControllerCanvas.alpha = 1;
+            unitControllerCanvas.interactable = true;
+            unitControllerCanvas.blocksRaycasts = true;
+        }
+
+        else if(activePlayer == 0) activePlayer = 1;
+        else if(activePlayer == 1) activePlayer = 0;
+
+        StartExpirationTimer();
+
+        Unit u = teams[activePlayer].units[activeUnit];
+        camControl.FlyOverPosition(u.transform.position);
+    }
+
+    public void ProcessClick(Transform target) {
+    	if(!EventSystem.current.IsPointerOverGameObject()) {
+	        if(activePlayer == 0) {
+	        	switch(actionMode) {
+
+	        		case(SelectedMode.Move):
+	        			if(target.GetComponent<HexUnit>().isAvailableForMovement) {
+	        				teams[activePlayer].units[activeUnit].GetComponent<Unit>().MoveToTile(target);
+	        				OnClearTilesSelection();
+	        			} else {
+	        				Debug.Log("Selected tile is not available or too far!");
+	        			}
+	        			break;
+
+	        		case(SelectedMode.Attack):
+	        			OnClearTilesSelection();
+	        			break;
+
+	        		case(SelectedMode.Bomb):
+	        			OnClearTilesSelection();
+	        			break;
+
+	        		case(SelectedMode.Rise):
+	        			OnClearTilesSelection();
+	        			break;
+
+	        		default:
+	        			break;
+	        	}
+	        }
+	    }
+    }
+
+    public void OnModeUpdated() {
+        Debug.Log("Mode updated: " + actionMode.ToString());
+
+        switch(actionMode) {
+    		case(SelectedMode.Move):
+    			TerrainGenerator.Instance.HighlightAvailableToMoveTiles(teams[activePlayer].units[activeUnit].tileOwned, 4, 0);
+    			break;
+
+    		case(SelectedMode.Attack):
+    			OnClearTilesSelection();
+    			break;
+
+    		case(SelectedMode.Bomb):
+    			OnClearTilesSelection();
+    			break;
+
+    		case(SelectedMode.Rise):
+    			OnClearTilesSelection();
+    			break;
+
+    		default:
+    			break;
+	    }
+    }
+
+    public void SelectMove() {
+        actionMode = SelectedMode.Move;
+        OnModeUpdated();
+    }
+
+    public void SelectNone() {
+        actionMode = SelectedMode.None;
+        OnModeUpdated();
+    }
+
+    public void SelectAttack() {
+        actionMode = SelectedMode.Attack;
+        OnModeUpdated();
+    }
+
+    public void SelectBomb() {
+        actionMode = SelectedMode.Bomb;
+        OnModeUpdated();
+    }
+
+    public void SelectRise() {
+        actionMode = SelectedMode.Rise;
+        OnModeUpdated();
+    }
+
+    private void OnUnitChange() {
+    	Unit u = teams[activePlayer].units[activeUnit];
+        camControl.FlyOverPosition(u.transform.position);
+    }
+
+    public void NextUnit() {
+    	OnClearTilesSelection();
+    	if(activeUnit < teams[activePlayer].units.Count - 1) {
+    		activeUnit++;
+    	}
+    	else {
+    		activeUnit = 0;
+    	}
+
+    	OnUnitChange();
+    }
+
+    public void PreviousUnit() {
+    	OnClearTilesSelection();
+    	if(activeUnit > 0) {
+    		activeUnit--;
+    	}
+    	else {
+    		activeUnit = teams[activePlayer].units.Count - 1;
+    	}
+
+    	OnUnitChange();
+    }
 }

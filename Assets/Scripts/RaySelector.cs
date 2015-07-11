@@ -15,7 +15,7 @@ public class RaySelector : MonoBehaviour {
             	objectHit.GetComponent<HexUnit>().HighlightMouseover();
 
             if(Input.GetMouseButton(0)) {
-            	TerrainGenerator.Instance.HighlightAvailableToMoveTiles(objectHit, 4, 0);
+            	GameScenario.Instance.ProcessClick(objectHit);
             }
         }
     }

@@ -1,6 +1,5 @@
 ﻿using UnityEngine;
 using System.Collections;
-using Pathfinding;
 
 public class TerrainGenerator : MonoBehaviour {
 
@@ -96,7 +95,6 @@ public class TerrainGenerator : MonoBehaviour {
 
 		if(recursionDepth < traverseDepth) {
 
-			Debug.Log("Row: "+(baseIndex / levelWidth));
 			if((baseIndex / levelWidth) % 2 == 0) {
 				if(baseIndex - 1 - levelWidth >= 0) HighlightAvailableToMoveTiles(hexes[baseIndex-1-levelWidth], traverseDepth, recursionDepth);
 				if(baseIndex - levelWidth >= 0) HighlightAvailableToMoveTiles(hexes[baseIndex-levelWidth], traverseDepth, recursionDepth);
