@@ -528,11 +528,11 @@
  <Reference Include="AmplifyMotion">
  <HintPath>/Users/rafal/Unity Projects/TurnBasedGame_CDProjekt/Assets/AmplifyMotion/Plugins/AmplifyMotion.dll</HintPath>
  </Reference>
- <Reference Include="Pathfinding.JsonFx">
- <HintPath>/Users/rafal/Unity Projects/TurnBasedGame_CDProjekt/Assets/AstarPathfindingProject/Plugins/JsonFx/Pathfinding.JsonFx.dll</HintPath>
- </Reference>
  <Reference Include="Pathfinding.Ionic.Zip.Reduced">
  <HintPath>/Users/rafal/Unity Projects/TurnBasedGame_CDProjekt/Assets/AstarPathfindingProject/Plugins/DotNetZip/Pathfinding.Ionic.Zip.Reduced.dll</HintPath>
+ </Reference>
+ <Reference Include="Pathfinding.JsonFx">
+ <HintPath>/Users/rafal/Unity Projects/TurnBasedGame_CDProjekt/Assets/AstarPathfindingProject/Plugins/JsonFx/Pathfinding.JsonFx.dll</HintPath>
  </Reference>
  <Reference Include="UnityEditor.iOS.Extensions.Xcode">
  <HintPath>/Applications/Unity/Unity.app/Contents/PlaybackEngines/iOSSupport/UnityEditor.iOS.Extensions.Xcode.dll</HintPath>

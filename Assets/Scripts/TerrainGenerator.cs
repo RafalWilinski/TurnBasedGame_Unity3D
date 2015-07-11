@@ -20,7 +20,20 @@ public class TerrainGenerator : MonoBehaviour {
 	private float oldPerlinAmplify;
 	private float oldPerlinScale;
 
+	private Transform myTransform;
+
+	//Singleton
+	private static TerrainGenerator _instance;
+	public static TerrainGenerator Instance {
+		get {
+			return _instance;
+		}
+	}
+
 	void Start () {
+		_instance = this;
+		myTransform = transform;
+
 		oldPerlinOffset = perlinOffset;
 		oldPerlinAmplify = perlinAmplify;
 		oldPerlinScale = perlinScale;
@@ -47,6 +60,7 @@ public class TerrainGenerator : MonoBehaviour {
 				float yPos = Mathf.PerlinNoise(hexes[i * levelWidth + j].position.x * perlinScale + perlinOffset.x, hexes[i * levelWidth + j].position.z * perlinScale + perlinOffset.y) * perlinAmplify;
 				
 				hexes[i * levelWidth + j].position = new Vector3(hexes[i * levelWidth + j].position.x, yPos, hexes[i * levelWidth + j].position.z);
+				hexes[i * levelWidth + j].parent = myTransform;
 			}
 		}
 	}
@@ -55,5 +69,53 @@ public class TerrainGenerator : MonoBehaviour {
 		if(oldPerlinAmplify != perlinAmplify || oldPerlinOffset != perlinOffset || oldPerlinScale != perlinScale) {
 			UpdateHexPositions();
 		}
+	}
+
+	public Transform GetNextFreeHex(Transform hex) {
+		for(int i = 0; i < levelHeight * levelWidth; i++) {
+			if(hexes[i] == hex) {
+				return hexes[i+1];
+			}
+		}
+
+		Debug.Log("No next free hex found!");
+		return null;
+	}
+
+	public void HighlightAvailableToMoveTiles(Transform baseTile, int traverseDepth, int recursionDepth) {
+		int baseIndex = 0;
+		recursionDepth++;
+
+		for(int i = 0; i < levelHeight * levelWidth; i++) {
+			if(hexes[i] == baseTile) {
+				baseIndex = i;
+			}
+		}
+
+		hexes[baseIndex].GetComponent<HexUnit>().AvailableForMovement();
+
+		if(recursionDepth < traverseDepth) {
+
+			Debug.Log("Row: "+(baseIndex / levelWidth));
+			if((baseIndex / levelWidth) % 2 == 0) {
+				if(baseIndex - 1 - levelWidth >= 0) HighlightAvailableToMoveTiles(hexes[baseIndex-1-levelWidth], traverseDepth, recursionDepth);
+				if(baseIndex - levelWidth >= 0) HighlightAvailableToMoveTiles(hexes[baseIndex-levelWidth], traverseDepth, recursionDepth);
+				if(baseIndex - 1 >= 0) HighlightAvailableToMoveTiles(hexes[baseIndex-1], traverseDepth, recursionDepth);
+
+				if(baseIndex + 1 < levelWidth * levelHeight) HighlightAvailableToMoveTiles(hexes[baseIndex+1], traverseDepth, recursionDepth);
+				if(baseIndex + levelWidth < levelWidth * levelHeight) HighlightAvailableToMoveTiles(hexes[baseIndex+levelWidth], traverseDepth, recursionDepth);
+				if(baseIndex - 1 + levelWidth < levelWidth * levelHeight) HighlightAvailableToMoveTiles(hexes[baseIndex-1+levelWidth], traverseDepth, recursionDepth);
+			}
+			else {
+				if(baseIndex + 1 - levelWidth >= 0) HighlightAvailableToMoveTiles(hexes[baseIndex + 1-levelWidth], traverseDepth, recursionDepth);
+				if(baseIndex - levelWidth >= 0) HighlightAvailableToMoveTiles(hexes[baseIndex-levelWidth], traverseDepth, recursionDepth);
+				if(baseIndex - 1 >= 0) HighlightAvailableToMoveTiles(hexes[baseIndex-1], traverseDepth, recursionDepth);
+
+				if(baseIndex + 1 < levelWidth * levelHeight) HighlightAvailableToMoveTiles(hexes[baseIndex+1], traverseDepth, recursionDepth);
+				if(baseIndex + levelWidth < levelWidth * levelHeight) HighlightAvailableToMoveTiles(hexes[baseIndex+levelWidth], traverseDepth, recursionDepth);
+				if(baseIndex + 1 + levelWidth < levelWidth * levelHeight) HighlightAvailableToMoveTiles(hexes[baseIndex+1+levelWidth], traverseDepth, recursionDepth);
+			}
+		}
+
 	}
 }

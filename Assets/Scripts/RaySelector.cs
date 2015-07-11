@@ -10,7 +10,13 @@ public class RaySelector : MonoBehaviour {
 
         if (Physics.Raycast(ray, out hit)) {
             Transform objectHit = hit.transform;
-            objectHit.GetComponent<HexUnit>().HighlightMouseover();
+
+            if(objectHit.gameObject.name.Contains("Hex"))
+            	objectHit.GetComponent<HexUnit>().HighlightMouseover();
+
+            if(Input.GetMouseButton(0)) {
+            	TerrainGenerator.Instance.HighlightAvailableToMoveTiles(objectHit, 4, 0);
+            }
         }
     }
 }
