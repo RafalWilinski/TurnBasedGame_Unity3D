@@ -267,11 +267,12 @@
      <Compile Include="Assets\SSAO Pro\Demo\Scripts\RotateAround.cs" />
      <Compile Include="Assets\SSAO Pro\Scripts\SSAOPro.cs" />
      <Compile Include="Assets\Scripts\AstarAI.cs" />
-     <Compile Include="Assets\Scripts\CatmullRomSpline.cs" />
+     <Compile Include="Assets\Scripts\CameraController.cs" />
      <Compile Include="Assets\Scripts\GameScenario.cs" />
-     <Compile Include="Assets\Scripts\MathUtils.cs" />
-     <Compile Include="Assets\Scripts\ParticlesAlongSplineRenderer.cs" />
+     <Compile Include="Assets\Scripts\HexUnit.cs" />
+     <Compile Include="Assets\Scripts\RaySelector.cs" />
      <Compile Include="Assets\Scripts\TerrainGenerator.cs" />
+     <Compile Include="Assets\Scripts\Unit.cs" />
      <None Include="Assets\Standard Assets\Effects\GlassRefraction\Shaders\GlassStainedBumpDistort.shader" />
      <None Include="Assets\Standard Assets\Effects\ImageEffects\Shaders\_BloomAndFlares\BlendOneOne.shader" />
      <None Include="Assets\Camera Filter Pack\Resources\CameraFilterPack_TV_Chromatical.shader" />

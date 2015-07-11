@@ -6,6 +6,8 @@ public class GameScenario : MonoBehaviour {
 
 	public TerrainGenerator terrainGen;
 
+
+
 	void Start () {
 		GameStart();
 	}
