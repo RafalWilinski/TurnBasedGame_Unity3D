@@ -1,9 +1,5 @@
-Obj/
-UnityGenerated/
+Temp/
 Library/
-Library/metadata
-Library/ScriptAssemblies
-Screenshots/
 
 # ===================================== #
 # Visual Studio / MonoDevelop generated #

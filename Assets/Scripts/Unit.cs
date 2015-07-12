@@ -3,9 +3,16 @@ using System.Collections;
 
 public class Unit : MonoBehaviour {
 
+	public Vector3 unitPlaceOffset = new Vector3(0, 3.5f, 0);
 
     public int teamNumber;
+    public int energyLeft;
+    public int attackPower;
+
     public float health;
+    public float moveSpeed = 1.2f;
+    public float moveAnimCurveHeightAmplifier;
+
     public Transform tileOwned;
     public AnimationCurve moveAnimCurve;
 
@@ -17,10 +24,12 @@ public class Unit : MonoBehaviour {
 
         myTransform = transform;
         teamNumber = team;
+        attackPower = Random.Range(15,30);
+        health = 100;
 
+        //Ensure this tile is not reserved. If it is, find next free. Allow only 10 tries.
         if(tile.GetComponent<HexUnit>().ReserveHex(this)) {
             Debug.Log("Hex reserved!");
-            myTransform.position = tile.position + new Vector3(0, 3.5f, 0);
         }
 
         else {
@@ -33,26 +42,61 @@ public class Unit : MonoBehaviour {
 
             Debug.Log("Place for unit found after " + retryCount + " iterations.");
             tile.GetComponent<HexUnit>().ReserveHex(this);
-            myTransform.position = tile.position + new Vector3(0, 3.5f, 0);
         }
 
+        myTransform.position = tile.position + unitPlaceOffset;
         tileOwned = tile;
     }
 
     public void MoveToTile(Transform newTile) {
-    	tileOwned.GetComponent<HexUnit>().FreeHex();
-    	tileOwned = newTile;
-    	tileOwned.GetComponent<HexUnit>().ReserveHex(this);
+    	int moveCost = TerrainGenerator.Instance.CalculatePathDistance(TerrainGenerator.Instance.FindTileIndex(tileOwned), TerrainGenerator.Instance.FindTileIndex(newTile), 0);
+		
+		if(moveCost <= energyLeft) {
+			energyLeft -= moveCost;
 
-    	//This is for noobs!
-    	//myTransform.position = tileOwned.position + new Vector3(0, 3.5f, 0);
+	    	tileOwned.GetComponent<HexUnit>().FreeHex();
+	    	tileOwned = newTile;
+	    	tileOwned.GetComponent<HexUnit>().ReserveHex(this);
+	    	
+	    	StopCoroutine("MoveToTarget");
+	    	StartCoroutine("MoveToTarget", newTile.position + unitPlaceOffset);
+
+	    	GameScenario.Instance.OnUnitChange(false);
+	    }
+    }
+
+    public void ReceiveDamage(int damage) {
+    	health -= damage;
+
+    	if(health <= 0) {
+    		GameScenario.Instance.teams[teamNumber].units.Remove(this);
+    	}
+
+    	GameScenario.Instance.OnUnitChange(false);
+    }
+
+    public void SetEnergy(int e) {
+    	energyLeft = e;
     }
 
     void Start () {
         myTransform = transform;
         myRenderer = GetComponent<Renderer>();
         myRenderer.material.color = GameScenario.Instance.teams[teamNumber].teamColor;
+    }
 
-        //StartCoroutine("PlaceOnHex");
+    IEnumerator MoveToTarget(Vector3 targetPos) {
+    	Debug.Log("Moving to target "+targetPos);
+    	float totalDistance = Vector3.Distance(targetPos, myTransform.position);
+    	float distance = totalDistance;
+
+    	while(distance > 0.1f) {
+    		myTransform.position = Vector3.Lerp(myTransform.position, targetPos, Time.deltaTime * moveSpeed);
+    		distance = Vector3.Distance(targetPos, myTransform.position);
+
+    		//myTransform.position += new Vector3(0, moveAnimCurve.Evaluate( distance / totalDistance), 0) * moveAnimCurveHeightAmplifier;
+
+    		yield return new WaitForEndOfFrame();
+    	}
     }
 }

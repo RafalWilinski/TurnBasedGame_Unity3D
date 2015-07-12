@@ -20,9 +20,20 @@ public class GameScenario : MonoBehaviour {
     public int actionBudget;
     public int maxTraverseDistance;
 
+    //INTERFACE Referencies
     public Text timeLeftLabel;
     public Text timerLabel;
+    public Text energyLeftLabel;
+    public Text healthLabel;
+    public Text attackLabel;
     public CanvasGroup unitControllerCanvas;
+
+    public Image moveIcon;
+    public Image attackIcon;
+    public Image bombIcon;
+    public Image riseIcon;
+    public Color normalColor;
+    public Color activeColor;
 
     //In-Game variables
     public int activePlayer;
@@ -52,7 +63,7 @@ public class GameScenario : MonoBehaviour {
 
     public List<Team> teams;
 
-    //Singleton
+    //SINGLETON
     private static GameScenario _instance;
     public static GameScenario Instance {
         get {
@@ -60,6 +71,7 @@ public class GameScenario : MonoBehaviour {
         }
     }
 
+    //EVENTS
     public delegate void ClearTilesSelection();
     public static event ClearTilesSelection OnClearTilesSelection;
 
@@ -71,32 +83,7 @@ public class GameScenario : MonoBehaviour {
         HideTimeLeftLabel();
     }
 
-    private void GameStart() {
-        StartCoroutine("UpdateGridAfterDelay");
-    }
-
-    private void HideTimeLeftLabel() {
-        timeLeftLabel.color = new Color(1, 1, 1, 0);
-    }
-
-    private void ShowTimeLeftLabel() {
-        timeLeftLabel.color = new Color(1, 1, 1, 1);
-    }
-
-    IEnumerator UpdateGridAfterDelay() {
-        yield return new WaitForSeconds(1f);
-
-        for(int i = 0; i < 100; i++) {
-            terrainGen.perlinAmplify += 1 / (i + 1f) ;
-            yield return new WaitForSeconds(0.0333f);
-        }
-
-        yield return new WaitForSeconds(0.5f);
-        Debug.Log("Rescan...");
-        //AstarPath.active.Scan();
-
-        CreateGameTeams();
-    }
+    //TURNS
 
     private void CreateGameTeams() {
         for(int i = 0; i < teams.Count; i++) {
@@ -165,9 +152,13 @@ public class GameScenario : MonoBehaviour {
 
         StartExpirationTimer();
 
-        Unit u = teams[activePlayer].units[activeUnit];
-        camControl.FlyOverPosition(u.transform.position);
+        OnUnitChange(true);
     }
+
+
+
+
+    //UI ACTIONS AND CLICKS
 
     public void ProcessClick(Transform target) {
     	if(!EventSystem.current.IsPointerOverGameObject()) {
@@ -179,7 +170,7 @@ public class GameScenario : MonoBehaviour {
 	        				teams[activePlayer].units[activeUnit].GetComponent<Unit>().MoveToTile(target);
 	        				OnClearTilesSelection();
 	        			} else {
-	        				Debug.Log("Selected tile is not available or too far!");
+//	        				Debug.Log("Selected tile is not available or too far!");
 	        			}
 	        			break;
 
@@ -207,7 +198,7 @@ public class GameScenario : MonoBehaviour {
 
         switch(actionMode) {
     		case(SelectedMode.Move):
-    			TerrainGenerator.Instance.HighlightAvailableToMoveTiles(teams[activePlayer].units[activeUnit].tileOwned, 4, 0);
+    			TerrainGenerator.Instance.HighlightAvailableToMoveTiles(teams[activePlayer].units[activeUnit].tileOwned, teams[activePlayer].units[activeUnit].energyLeft + 1, 0);
     			break;
 
     		case(SelectedMode.Attack):
@@ -252,9 +243,16 @@ public class GameScenario : MonoBehaviour {
         OnModeUpdated();
     }
 
-    private void OnUnitChange() {
+
+    //UNIT MANAGEMENT
+
+    public void OnUnitChange(bool flyOverUnit = true) {
     	Unit u = teams[activePlayer].units[activeUnit];
-        camControl.FlyOverPosition(u.transform.position);
+        if(flyOverUnit) camControl.FlyOverPosition(u.transform.position);
+
+        attackLabel.text = u.attackPower.ToString();
+        healthLabel.text = u.health.ToString() + " / 100";
+        energyLeftLabel.text = u.energyLeft.ToString();
     }
 
     public void NextUnit() {
@@ -279,5 +277,35 @@ public class GameScenario : MonoBehaviour {
     	}
 
     	OnUnitChange();
+    }
+
+
+    //HELPERS
+    
+    private void GameStart() {
+        StartCoroutine("UpdateGridAfterDelay");
+    }
+
+    private void HideTimeLeftLabel() {
+        timeLeftLabel.color = new Color(1, 1, 1, 0);
+    }
+
+    private void ShowTimeLeftLabel() {
+        timeLeftLabel.color = new Color(1, 1, 1, 1);
+    }
+
+    IEnumerator UpdateGridAfterDelay() {
+        yield return new WaitForSeconds(1f);
+
+        for(int i = 0; i < 100; i++) {
+            terrainGen.perlinAmplify += 1 / (i + 1f) ;
+            yield return new WaitForSeconds(0.0333f);
+        }
+
+        yield return new WaitForSeconds(0.5f);
+        Debug.Log("Rescan...");
+        //AstarPath.active.Scan();
+
+        CreateGameTeams();
     }
 }
