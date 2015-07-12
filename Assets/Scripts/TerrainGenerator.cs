@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class TerrainGenerator : MonoBehaviour {
 
@@ -18,6 +19,7 @@ public class TerrainGenerator : MonoBehaviour {
     private Vector2 oldPerlinOffset;
     private float oldPerlinAmplify;
     private float oldPerlinScale;
+    private bool[] hexesVisited;
 
     private Transform myTransform;
 
@@ -82,13 +84,13 @@ public class TerrainGenerator : MonoBehaviour {
     }
 
     public int FindTileIndex(Transform tile) {
-    	for(int i = 0; i < levelHeight * levelWidth; i++) {
+        for(int i = 0; i < levelHeight * levelWidth; i++) {
             if(hexes[i] == tile) {
-            	return i;
+                return i;
             }
         }
 
-        Debug.LogWarning("Selected tile not found! Are you sure it belongs to grid?");
+        Debug.LogWarning("Selected tile not found! Are you sure it belongs to grid? Name: "+tile.gameObject.name);
         return -1;
     }
 
@@ -98,110 +100,118 @@ public class TerrainGenerator : MonoBehaviour {
         distanceAccumulator++;
 
         if(baseIndex == targetIndex) {
-        	return distanceAccumulator - 1;
+            return distanceAccumulator - 1;
         }
 
         if(distanceAccumulator < 6) { //Stop calculating after 10 recursions
-	        if((baseIndex / levelWidth) % 2 == 0) {
-	            if(baseIndex - 1 - levelWidth >= 0) {
-	            	pathDistance = CalculatePathDistance(baseIndex - 1 - levelWidth, targetIndex, distanceAccumulator);
-	            	if(pathDistance < shortestPathDistance) shortestPathDistance = pathDistance;
-	            }
+            if((baseIndex / levelWidth) % 2 == 0) {
+                if(baseIndex - 1 - levelWidth >= 0) {
+                    pathDistance = CalculatePathDistance(baseIndex - 1 - levelWidth, targetIndex, distanceAccumulator);
+                    if(pathDistance < shortestPathDistance) shortestPathDistance = pathDistance;
+                }
 
-	            if(baseIndex - levelWidth >= 0) {
-	            	pathDistance = CalculatePathDistance(baseIndex - levelWidth, targetIndex, distanceAccumulator);
-	            	if(pathDistance < shortestPathDistance) shortestPathDistance = pathDistance;
-	            }
+                if(baseIndex - levelWidth >= 0) {
+                    pathDistance = CalculatePathDistance(baseIndex - levelWidth, targetIndex, distanceAccumulator);
+                    if(pathDistance < shortestPathDistance) shortestPathDistance = pathDistance;
+                }
 
-	            if(baseIndex - 1 >= 0) {
-	            	pathDistance = CalculatePathDistance(baseIndex - 1, targetIndex, distanceAccumulator);
-	            	if(pathDistance < shortestPathDistance) shortestPathDistance = pathDistance;
-	            }
+                if(baseIndex - 1 >= 0) {
+                    pathDistance = CalculatePathDistance(baseIndex - 1, targetIndex, distanceAccumulator);
+                    if(pathDistance < shortestPathDistance) shortestPathDistance = pathDistance;
+                }
 
-	            if(baseIndex + 1 >= 0) {
-	            	pathDistance = CalculatePathDistance(baseIndex + 1, targetIndex, distanceAccumulator);
-	            	if(pathDistance < shortestPathDistance) shortestPathDistance = pathDistance;
-	            }
+                if(baseIndex + 1 >= 0) {
+                    pathDistance = CalculatePathDistance(baseIndex + 1, targetIndex, distanceAccumulator);
+                    if(pathDistance < shortestPathDistance) shortestPathDistance = pathDistance;
+                }
 
-	            if(baseIndex + levelWidth >= 0) {
-	            	pathDistance = CalculatePathDistance(baseIndex + levelWidth, targetIndex, distanceAccumulator);
-	            	if(pathDistance < shortestPathDistance) shortestPathDistance = pathDistance;
-	            }
+                if(baseIndex + levelWidth >= 0) {
+                    pathDistance = CalculatePathDistance(baseIndex + levelWidth, targetIndex, distanceAccumulator);
+                    if(pathDistance < shortestPathDistance) shortestPathDistance = pathDistance;
+                }
 
-	            if(baseIndex - 1 + levelWidth >= 0) {
-	            	pathDistance = CalculatePathDistance(baseIndex - 1 + levelWidth, targetIndex, distanceAccumulator);
-	            	if(pathDistance < shortestPathDistance) shortestPathDistance = pathDistance;
-	            }
-	        } 
-	        else {
+                if(baseIndex - 1 + levelWidth >= 0) {
+                    pathDistance = CalculatePathDistance(baseIndex - 1 + levelWidth, targetIndex, distanceAccumulator);
+                    if(pathDistance < shortestPathDistance) shortestPathDistance = pathDistance;
+                }
+            } else {
 
-	        	if(baseIndex + 1 - levelWidth >= 0) {
-	            	pathDistance = CalculatePathDistance(baseIndex + 1 - levelWidth, targetIndex, distanceAccumulator);
-	            	if(pathDistance < shortestPathDistance) shortestPathDistance = pathDistance;
-	            }
+                if(baseIndex + 1 - levelWidth >= 0) {
+                    pathDistance = CalculatePathDistance(baseIndex + 1 - levelWidth, targetIndex, distanceAccumulator);
+                    if(pathDistance < shortestPathDistance) shortestPathDistance = pathDistance;
+                }
 
-	            if(baseIndex - levelWidth >= 0) {
-	            	pathDistance = CalculatePathDistance(baseIndex - levelWidth, targetIndex, distanceAccumulator);
-	            	if(pathDistance < shortestPathDistance) shortestPathDistance = pathDistance;
-	            }
+                if(baseIndex - levelWidth >= 0) {
+                    pathDistance = CalculatePathDistance(baseIndex - levelWidth, targetIndex, distanceAccumulator);
+                    if(pathDistance < shortestPathDistance) shortestPathDistance = pathDistance;
+                }
 
-	            if(baseIndex - 1 >= 0) {
-	            	pathDistance = CalculatePathDistance(baseIndex - 1, targetIndex, distanceAccumulator);
-	            	if(pathDistance < shortestPathDistance) shortestPathDistance = pathDistance;
-	            }
-	            if(baseIndex + 1 >= 0) {
-	            	pathDistance = CalculatePathDistance(baseIndex + 1, targetIndex, distanceAccumulator);
-	            	if(pathDistance < shortestPathDistance) shortestPathDistance = pathDistance;
-	            }
+                if(baseIndex - 1 >= 0) {
+                    pathDistance = CalculatePathDistance(baseIndex - 1, targetIndex, distanceAccumulator);
+                    if(pathDistance < shortestPathDistance) shortestPathDistance = pathDistance;
+                }
+                if(baseIndex + 1 >= 0) {
+                    pathDistance = CalculatePathDistance(baseIndex + 1, targetIndex, distanceAccumulator);
+                    if(pathDistance < shortestPathDistance) shortestPathDistance = pathDistance;
+                }
 
-	            if(baseIndex + levelWidth >= 0) {
-	            	pathDistance = CalculatePathDistance(baseIndex + levelWidth, targetIndex, distanceAccumulator);
-	            	if(pathDistance < shortestPathDistance) shortestPathDistance = pathDistance;
-	            }
+                if(baseIndex + levelWidth >= 0) {
+                    pathDistance = CalculatePathDistance(baseIndex + levelWidth, targetIndex, distanceAccumulator);
+                    if(pathDistance < shortestPathDistance) shortestPathDistance = pathDistance;
+                }
 
-	            if(baseIndex + 1 + levelWidth >= 0) {
-	            	pathDistance = CalculatePathDistance(baseIndex + 1 + levelWidth, targetIndex, distanceAccumulator);
-	            	if(pathDistance < shortestPathDistance) shortestPathDistance = pathDistance;
-	            }
-	        }
-	    }
-
-	    return shortestPathDistance;
-	    //Not found!
-    }
-
-    public void HighlightAvailableToMoveTiles(Transform baseTile, int traverseDepth, int recursionDepth) {
-        int baseIndex = 0;
-        recursionDepth++;
-
-        for(int i = 0; i < levelHeight * levelWidth; i++) {
-            if(hexes[i] == baseTile) {
-                baseIndex = i;
+                if(baseIndex + 1 + levelWidth >= 0) {
+                    pathDistance = CalculatePathDistance(baseIndex + 1 + levelWidth, targetIndex, distanceAccumulator);
+                    if(pathDistance < shortestPathDistance) shortestPathDistance = pathDistance;
+                }
             }
         }
+
+        return shortestPathDistance;
+        //Not found!
+    }
+
+    public void HighlightAvailableToMoveTiles(int baseIndex, int traverseDepth, int recursionDepth) {
+        recursionDepth++;
 
         hexes[baseIndex].GetComponent<HexUnit>().AvailableForMovement();
 
         if(recursionDepth < traverseDepth) {
-            if((baseIndex / levelWidth) % 2 == 0) {
-                if(baseIndex - 1 - levelWidth >= 0) HighlightAvailableToMoveTiles(hexes[baseIndex - 1 - levelWidth], traverseDepth, recursionDepth);
-                if(baseIndex - levelWidth >= 0) HighlightAvailableToMoveTiles(hexes[baseIndex - levelWidth], traverseDepth, recursionDepth);
-                if(baseIndex - 1 >= 0) HighlightAvailableToMoveTiles(hexes[baseIndex - 1], traverseDepth, recursionDepth);
 
-                if(baseIndex + 1 < levelWidth * levelHeight) HighlightAvailableToMoveTiles(hexes[baseIndex + 1], traverseDepth, recursionDepth);
-                if(baseIndex + levelWidth < levelWidth * levelHeight) HighlightAvailableToMoveTiles(hexes[baseIndex + levelWidth], traverseDepth, recursionDepth);
-                if(baseIndex - 1 + levelWidth < levelWidth * levelHeight) HighlightAvailableToMoveTiles(hexes[baseIndex - 1 + levelWidth], traverseDepth, recursionDepth);
+            if(baseIndex - levelWidth >= 0) HighlightAvailableToMoveTiles(baseIndex - levelWidth, traverseDepth, recursionDepth);
+            if(baseIndex - 1 >= 0) HighlightAvailableToMoveTiles(baseIndex - 1, traverseDepth, recursionDepth);
+            if(baseIndex + 1 < levelWidth * levelHeight) HighlightAvailableToMoveTiles(baseIndex + 1, traverseDepth, recursionDepth);
+            if(baseIndex + levelWidth < levelWidth * levelHeight) HighlightAvailableToMoveTiles(baseIndex + levelWidth, traverseDepth, recursionDepth);
+
+            if((baseIndex / levelWidth) % 2 == 0) {
+                if(baseIndex - 1 - levelWidth >= 0) HighlightAvailableToMoveTiles(baseIndex - 1 - levelWidth, traverseDepth, recursionDepth);
+                if(baseIndex - 1 + levelWidth < levelWidth * levelHeight) HighlightAvailableToMoveTiles(baseIndex - 1 + levelWidth, traverseDepth, recursionDepth);
             } 
             else {
-                if(baseIndex + 1 - levelWidth >= 0) HighlightAvailableToMoveTiles(hexes[baseIndex + 1 - levelWidth], traverseDepth, recursionDepth);
-                if(baseIndex - levelWidth >= 0) HighlightAvailableToMoveTiles(hexes[baseIndex - levelWidth], traverseDepth, recursionDepth);
-                if(baseIndex - 1 >= 0) HighlightAvailableToMoveTiles(hexes[baseIndex - 1], traverseDepth, recursionDepth);
-
-                if(baseIndex + 1 < levelWidth * levelHeight) HighlightAvailableToMoveTiles(hexes[baseIndex + 1], traverseDepth, recursionDepth);
-                if(baseIndex + levelWidth < levelWidth * levelHeight) HighlightAvailableToMoveTiles(hexes[baseIndex + levelWidth], traverseDepth, recursionDepth);
-                if(baseIndex + 1 + levelWidth < levelWidth * levelHeight) HighlightAvailableToMoveTiles(hexes[baseIndex + 1 + levelWidth], traverseDepth, recursionDepth);
+                if(baseIndex + 1 - levelWidth >= 0) HighlightAvailableToMoveTiles(baseIndex + 1 - levelWidth, traverseDepth, recursionDepth);
+                if(baseIndex + 1 + levelWidth < levelWidth * levelHeight) HighlightAvailableToMoveTiles(baseIndex + 1 + levelWidth, traverseDepth, recursionDepth);
             }
         }
+    }
 
+    public List<Transform> GetHexNeighbours(Transform hex) {
+    	int baseIndex = FindTileIndex(hex);
+    	List<Transform> neighbours = new List<Transform>();
+
+    	if(baseIndex - levelWidth >= 0) neighbours.Add(hexes[baseIndex - levelWidth]);
+        if(baseIndex - 1 >= 0) neighbours.Add(hexes[baseIndex - 1]);
+        if(baseIndex + 1 < levelWidth * levelHeight) neighbours.Add(hexes[baseIndex + 1]);
+        if(baseIndex + levelWidth < levelWidth * levelHeight) neighbours.Add(hexes[baseIndex + levelWidth]);
+
+        if((baseIndex / levelWidth) % 2 == 0) {
+            if(baseIndex - 1 - levelWidth >= 0) neighbours.Add(hexes[baseIndex - 1 - levelWidth]);
+            if(baseIndex - 1 + levelWidth < levelWidth * levelHeight) neighbours.Add(hexes[baseIndex - 1 + levelWidth]);
+        } 
+        else {
+            if(baseIndex + 1 - levelWidth >= 0) neighbours.Add(hexes[baseIndex + 1 - levelWidth]);
+            if(baseIndex + 1 + levelWidth < levelWidth * levelHeight) neighbours.Add(hexes[baseIndex + 1 + levelWidth]);
+        }
+
+        return neighbours;
     }
 }

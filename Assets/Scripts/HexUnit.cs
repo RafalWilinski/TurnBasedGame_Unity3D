@@ -5,19 +5,34 @@ public class HexUnit : MonoBehaviour {
 
 	public Color mouseOverColor;
 	public Color availableColor;
-	public Color mountainColor;
+	public Color halfHighlightColor;
 	public Color availableToMoveColor;
 	public float fadeDelay;
 
 	private bool isReserved = false;
 	private bool isMouseOver;
+	private bool isHalfHighlight;
+	private bool isEpicenter;
 
 	[HideInInspector]
 	public bool isAvailableForMovement;
 
 	private Color oldColor;
 	private Renderer myRenderer;
+	private Transform myTransform;
 	private Unit hexOwner;
+	private HexUnit halfHighlightSource;
+
+	private float riseAmount;
+
+	public Transform MyTransform {
+		get { return myTransform; }
+	}
+
+	public bool IsEpicenter {
+		get { return isEpicenter; }
+		set { isEpicenter = value; }
+	}
 
 	public bool IsReserved {
 		get { return isReserved; }
@@ -29,6 +44,7 @@ public class HexUnit : MonoBehaviour {
 
 	private void Awake() {
 		myRenderer = GetComponent<Renderer>();
+		myTransform = transform;
 	}
 
 	private void OnEnable() {
@@ -50,6 +66,37 @@ public class HexUnit : MonoBehaviour {
 		StartCoroutine("CheckMouseOver");
 	}
 
+	public void HalfHighlight(HexUnit src) {
+		if(!isReserved) {
+			isHalfHighlight = true;
+			halfHighlightSource = src;
+
+			StopCoroutine("CheckHighlightSource");
+			myRenderer.material.color = halfHighlightColor;
+			StartCoroutine("CheckHighlightSource");
+		}
+	}
+
+	public void MakeEpicenter() {
+		isEpicenter = true;
+		StopCoroutine("CheckEpicenter");
+		StartCoroutine("CheckEpicenter");
+	}
+
+	IEnumerator CheckEpicenter() {
+		yield return new WaitForSeconds(0.03f);
+		isEpicenter = false;
+		RevertToNormal();
+	}
+
+	IEnumerator CheckHighlightSource() {
+		yield return new WaitForSeconds(0.03f);
+		if(!halfHighlightSource.IsEpicenter) {
+			isHalfHighlight = false;
+			RevertToNormal();
+		}
+	}
+
 	public void AvailableForMovement() {
 		if(!isReserved) {
 			isAvailableForMovement = true;
@@ -67,6 +114,8 @@ public class HexUnit : MonoBehaviour {
 			myRenderer.material.color = GameScenario.Instance.teams[hexOwner.teamNumber].teamColor;
 		else if(isAvailableForMovement) 
 			myRenderer.material.color = availableToMoveColor;
+		else if(isHalfHighlight) 
+			myRenderer.material.color = halfHighlightColor;
 		else 
 			myRenderer.material.color = availableColor;
 	}
@@ -83,13 +132,25 @@ public class HexUnit : MonoBehaviour {
 		else {
 			isReserved = true;
 			hexOwner = u;
-			GetComponent<Renderer>().material.color = GameScenario.Instance.teams[hexOwner.teamNumber].teamColor;
+			myRenderer.material.color = GameScenario.Instance.teams[hexOwner.teamNumber].teamColor;
 			return myRenderer;
 		}
 	}
 
 	public void FreeHex() {
 		isReserved = false;
-		myRenderer.material.color = availableColor;
+		RevertToNormal();
+	}
+
+	public void Rise(float amount) {
+		riseAmount = amount;
+		StartCoroutine("RiseCoroutine");
+	}
+
+	IEnumerator RiseCoroutine() {
+		for(int i = 0; i < 50; i++) {
+			myTransform.localScale = new Vector3(myTransform.localScale.x, myTransform.localScale.y + riseAmount, myTransform.localScale.z);
+			yield return new WaitForEndOfFrame();
+		}
 	}
 }

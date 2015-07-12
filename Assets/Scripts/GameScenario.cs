@@ -16,10 +16,11 @@ public class GameScenario : MonoBehaviour {
     //Game Settings
     public Vector3 unitSpawnOffset;
     public float turnTime;
-    public float unitsSpawnSpread;
     public int unitsPerTeam;
-    public int actionBudget;
-    public int maxTraverseDistance;
+    public int energyBudget;
+    public int bombReach;
+    public int riseReach;
+    public int attackReach;
 
     //INTERFACE Referencies
     public Text timeLeftLabel;
@@ -165,6 +166,10 @@ public class GameScenario : MonoBehaviour {
         else if(activePlayer == 0) activePlayer = 1;
         else if(activePlayer == 1) activePlayer = 0;
 
+        for(int i = 0; i < teams[activePlayer].units.Count; i++) {
+    		teams[activePlayer].units[i].SetEnergy(energyBudget);
+    	}
+
         if(teams[activePlayer].logicType == Team.Logic.Human) {
         	unitControllerCanvas.alpha = 1;
             unitControllerCanvas.interactable = true;
@@ -207,12 +212,21 @@ public class GameScenario : MonoBehaviour {
     }
 
     public void ProcessClick(Transform target) {
+
+    	int currentUnitIndex = TerrainGenerator.Instance.FindTileIndex(teams[activePlayer].units[activeUnit].tileOwned);
+    	int targetIndex = 0;
+
+    	if(target.gameObject.name.Contains("Hex")) targetIndex = TerrainGenerator.Instance.FindTileIndex(target);
+    	else if(target.gameObject.name.Contains("Unit")) {
+    		Debug.Log("Clicked unit, finding owned tile instead.");
+    		targetIndex = TerrainGenerator.Instance.FindTileIndex(target.GetComponent<Unit>().tileOwned);
+    	}
+
     	if(!EventSystem.current.IsPointerOverGameObject()) {
 	        if(teams[activePlayer].logicType == Team.Logic.Human) {
 	        	switch(actionMode) {
-
 	        		case(SelectedMode.Move):
-	        			if(target.GetComponent<HexUnit>().isAvailableForMovement) {
+	        			if(target.gameObject.name.Contains("Hex") && target.GetComponent<HexUnit>().isAvailableForMovement) {
 	        				teams[activePlayer].units[activeUnit].GetComponent<Unit>().MoveToTile(target);
 	        				OnClearTilesSelection();
 	        			} else {
@@ -226,6 +240,11 @@ public class GameScenario : MonoBehaviour {
 
 	        		case(SelectedMode.Bomb):
 	        			OnClearTilesSelection();
+
+	        			if(TerrainGenerator.Instance.CalculatePathDistance(currentUnitIndex, targetIndex, 0) <= bombReach) {
+
+	        			}
+
 	        			break;
 
 	        		case(SelectedMode.Rise):
@@ -245,22 +264,25 @@ public class GameScenario : MonoBehaviour {
 
     public void OnModeUpdated() {
         Debug.Log("Mode updated: " + actionMode.ToString());
+        OnClearTilesSelection();
+
+        int activeUnitTile = TerrainGenerator.Instance.FindTileIndex(teams[activePlayer].units[activeUnit].tileOwned);
 
         switch(actionMode) {
     		case(SelectedMode.Move):
-    			TerrainGenerator.Instance.HighlightAvailableToMoveTiles(teams[activePlayer].units[activeUnit].tileOwned, teams[activePlayer].units[activeUnit].energyLeft + 1, 0);
+    			TerrainGenerator.Instance.HighlightAvailableToMoveTiles(activeUnitTile, teams[activePlayer].units[activeUnit].energyLeft + 1, 0);
     			break;
 
     		case(SelectedMode.Attack):
-    			OnClearTilesSelection();
+    			TerrainGenerator.Instance.HighlightAvailableToMoveTiles(activeUnitTile, attackReach + 1, 0);
     			break;
 
     		case(SelectedMode.Bomb):
-    			OnClearTilesSelection();
+    			TerrainGenerator.Instance.HighlightAvailableToMoveTiles(activeUnitTile, bombReach + 1, 0);
     			break;
 
     		case(SelectedMode.Rise):
-    			OnClearTilesSelection();
+    			TerrainGenerator.Instance.HighlightAvailableToMoveTiles(activeUnitTile, riseReach + 1, 0);
     			break;
 
     		default:
