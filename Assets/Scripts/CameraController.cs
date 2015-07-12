@@ -66,7 +66,7 @@ public class CameraController : MonoBehaviour {
 	}
 
 	IEnumerator FlyCoroutine() {
-		for(int i = 0; i < 100; i++) {
+		for(int i = 0; i < 75; i++) {
 			cameraTransform.position = Vector3.Slerp(cameraTransform.position , tempTargetPosition, Time.deltaTime * flyOverSpeed);
 
 			Vector3 rotPos = tempTargetPosition - cameraTransform.position + new Vector3(0, -2, 0);

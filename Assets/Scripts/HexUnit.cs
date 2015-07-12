@@ -7,15 +7,25 @@ public class HexUnit : MonoBehaviour {
 	public Color availableColor;
 	public Color mountainColor;
 	public Color availableToMoveColor;
-	
 	public float fadeDelay;
+
 	private bool isReserved = false;
 	private bool isMouseOver;
+
+	[HideInInspector]
 	public bool isAvailableForMovement;
 
 	private Color oldColor;
 	private Renderer myRenderer;
 	private Unit hexOwner;
+
+	public bool IsReserved {
+		get { return isReserved; }
+	}
+
+	public Unit Owner {
+		get { return hexOwner; }
+	}
 
 	private void Awake() {
 		myRenderer = GetComponent<Renderer>();
@@ -69,10 +79,10 @@ public class HexUnit : MonoBehaviour {
 	}
 
 	public bool ReserveHex(Unit u) {
-		hexOwner = u;
 		if(isReserved) return false;
 		else {
 			isReserved = true;
+			hexOwner = u;
 			GetComponent<Renderer>().material.color = GameScenario.Instance.teams[hexOwner.teamNumber].teamColor;
 			return myRenderer;
 		}

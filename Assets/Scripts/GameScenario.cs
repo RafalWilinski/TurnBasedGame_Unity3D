@@ -11,6 +11,7 @@ public class GameScenario : MonoBehaviour {
     public TerrainGenerator terrainGen;
     public GameObject unitPrefab;
     public CameraController camControl;
+    public Camera cam;
 
     //Game Settings
     public Vector3 unitSpawnOffset;
@@ -23,11 +24,21 @@ public class GameScenario : MonoBehaviour {
     //INTERFACE Referencies
     public Text timeLeftLabel;
     public Text timerLabel;
+
+    public CanvasGroup unitInformationCanvas;
+    public Text unitInformationHealthLabel;
+    public Text unitInformationHealthBackgroundLabel;
+    public Text unitInformationAttackLabel;
+
+    public CanvasGroup unitAttackTargetCanvas;
+    public Text unitAttackTargetHealthLabel;
+    public Text unitAttackTargetHealthBackgroundLabel;
+    public Text unitAttackTargetChanceToHitLabel;
+
+    public CanvasGroup unitControllerCanvas;
     public Text energyLeftLabel;
     public Text healthLabel;
     public Text attackLabel;
-    public CanvasGroup unitControllerCanvas;
-
     public Image moveIcon;
     public Image attackIcon;
     public Image bombIcon;
@@ -63,7 +74,7 @@ public class GameScenario : MonoBehaviour {
 
     public List<Team> teams;
 
-    //SINGLETON
+    #region Singleton
     private static GameScenario _instance;
     public static GameScenario Instance {
         get {
@@ -71,9 +82,15 @@ public class GameScenario : MonoBehaviour {
         }
     }
 
-    //EVENTS
+    #endregion
+
+
+    #region Events
+
     public delegate void ClearTilesSelection();
     public static event ClearTilesSelection OnClearTilesSelection;
+
+    #endregion
 
     void Start () {
         _instance = this;
@@ -83,7 +100,8 @@ public class GameScenario : MonoBehaviour {
         HideTimeLeftLabel();
     }
 
-    //TURNS
+    
+    #region Turns
 
     private void CreateGameTeams() {
         for(int i = 0; i < teams.Count; i++) {
@@ -142,27 +160,55 @@ public class GameScenario : MonoBehaviour {
 
         if(activePlayer == -1) {
             activePlayer = 0;
-            unitControllerCanvas.alpha = 1;
-            unitControllerCanvas.interactable = true;
-            unitControllerCanvas.blocksRaycasts = true;
         }
 
         else if(activePlayer == 0) activePlayer = 1;
         else if(activePlayer == 1) activePlayer = 0;
+
+        if(teams[activePlayer].logicType == Team.Logic.Human) {
+        	unitControllerCanvas.alpha = 1;
+            unitControllerCanvas.interactable = true;
+            unitControllerCanvas.blocksRaycasts = true;
+        }
+        else {
+        	unitControllerCanvas.alpha = 0;
+            unitControllerCanvas.interactable = false;
+            unitControllerCanvas.blocksRaycasts = false;
+        }
 
         StartExpirationTimer();
 
         OnUnitChange(true);
     }
 
+    #endregion
 
 
 
-    //UI ACTIONS AND CLICKS
+    #region UI
+    
+    public void ShowUnitInformation(Unit unit) {
+    	StopCoroutine("HideUnitInformation");
+
+    	unitInformationCanvas.alpha = 1;
+
+    	unitInformationCanvas.transform.position = cam.WorldToScreenPoint(unit.transform.position);
+    	unitInformationHealthLabel.text = unit.health.ToString("f0") + " / 100";
+    	unitInformationHealthBackgroundLabel.text = unit.health.ToString("f0") + " / 100";
+    	unitInformationHealthLabel.GetComponent<RectTransform>().rect.Set(0, 0, unit.health, 40);
+    	unitInformationAttackLabel.text = "DMG: "+unit.attackPower;
+
+    	StartCoroutine("HideUnitInformation");
+    }
+
+    IEnumerator HideUnitInformation() {
+    	yield return new WaitForSeconds(0.03f);
+    	unitInformationCanvas.alpha = 0;
+    }
 
     public void ProcessClick(Transform target) {
     	if(!EventSystem.current.IsPointerOverGameObject()) {
-	        if(activePlayer == 0) {
+	        if(teams[activePlayer].logicType == Team.Logic.Human) {
 	        	switch(actionMode) {
 
 	        		case(SelectedMode.Move):
@@ -189,6 +235,10 @@ public class GameScenario : MonoBehaviour {
 	        		default:
 	        			break;
 	        	}
+	        }
+	        //This player is controller by AI!
+	        else {
+
 	        }
 	    }
     }
@@ -243,8 +293,13 @@ public class GameScenario : MonoBehaviour {
         OnModeUpdated();
     }
 
+    public void EndTurn() {
+    	NextTurn();
+    }
 
-    //UNIT MANAGEMENT
+    #endregion
+    
+    #region UnitManagement
 
     public void OnUnitChange(bool flyOverUnit = true) {
     	Unit u = teams[activePlayer].units[activeUnit];
@@ -253,6 +308,10 @@ public class GameScenario : MonoBehaviour {
         attackLabel.text = u.attackPower.ToString();
         healthLabel.text = u.health.ToString() + " / 100";
         energyLeftLabel.text = u.energyLeft.ToString();
+
+        if(u.energyLeft > 1) energyLeftLabel.color = Color.white;
+        else if(u.energyLeft == 1) energyLeftLabel.color = Color.yellow;
+        else if(u.energyLeft == 0) energyLeftLabel.color = Color.red;
     }
 
     public void NextUnit() {
@@ -279,8 +338,10 @@ public class GameScenario : MonoBehaviour {
     	OnUnitChange();
     }
 
+    #endregion
 
-    //HELPERS
+
+    #region HelperFunctions
     
     private void GameStart() {
         StartCoroutine("UpdateGridAfterDelay");
@@ -308,4 +369,5 @@ public class GameScenario : MonoBehaviour {
 
         CreateGameTeams();
     }
+    #endregion
 }
