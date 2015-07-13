@@ -12,12 +12,39 @@ public class Unit : MonoBehaviour {
     public float health;
     public float moveSpeed = 1.2f;
     public float moveAnimCurveHeightAmplifier;
+    public float shadeFactor;
 
     public Transform tileOwned;
     public AnimationCurve moveAnimCurve;
 
     private Transform myTransform;
     private Renderer myRenderer;
+
+    private void OnEnable() {
+        GameScenario.OnUnitSelected += OnUnitSelected;
+    }
+
+    private void OnDisable() {
+        GameScenario.OnUnitSelected -= OnUnitSelected;
+    }
+
+    private void OnUnitSelected(Unit u) {
+
+        if(myRenderer == null) myRenderer = GetComponent<Renderer>();
+
+        if(u == this) {
+            myRenderer.material.color = new Color( (1.0f - shadeFactor) * GameScenario.Instance.teams[teamNumber].teamColor.r, 
+                (1.0f - shadeFactor) * GameScenario.Instance.teams[teamNumber].teamColor.g, 
+                (1.0f - shadeFactor) * GameScenario.Instance.teams[teamNumber].teamColor.b, 1);
+        }
+        else {
+            myRenderer.material.color = GameScenario.Instance.teams[teamNumber].teamColor;
+        }
+    }
+
+    public void ChangeYAxisOffset() {
+        myTransform.position = tileOwned.position + unitPlaceOffset;
+    }
 
     public void AssignValues(int team, Transform tile) {
         int retryCount = 0;
@@ -40,7 +67,7 @@ public class Unit : MonoBehaviour {
                 retryCount++;
             }
 
-            Debug.Log("Place for unit found after " + retryCount + " iterations.");
+//            Debug.Log("Place for unit found after " + retryCount + " iterations.");
             tile.GetComponent<HexUnit>().ReserveHex(this);
         }
 
@@ -69,6 +96,7 @@ public class Unit : MonoBehaviour {
     	health -= damage;
 
     	if(health <= 0) {
+            tileOwned.GetComponent<HexUnit>().FreeHex();
     		GameScenario.Instance.teams[teamNumber].units.Remove(this);
     	}
 
@@ -88,15 +116,35 @@ public class Unit : MonoBehaviour {
     IEnumerator MoveToTarget(Vector3 targetPos) {
     	Debug.Log("Moving to target "+targetPos);
     	float totalDistance = Vector3.Distance(targetPos, myTransform.position);
+        Vector3 startPosition = myTransform.position;
     	float distance = totalDistance;
 
+        for(int i = 0; i < 50; i++) {
+            GameScenario.Instance.aimLine.SetPosition(0, myTransform.position);
+            myTransform.position = Vector3.Lerp(myTransform.position, startPosition + new Vector3(0, 3, 0), Time.deltaTime * moveSpeed);
+            yield return new WaitForEndOfFrame();
+        }
+
+        yield return new WaitForSeconds(0.1f);
+
     	while(distance > 0.1f) {
-    		myTransform.position = Vector3.Lerp(myTransform.position, targetPos, Time.deltaTime * moveSpeed);
-    		distance = Vector3.Distance(targetPos, myTransform.position);
+            GameScenario.Instance.aimLine.SetPosition(0, myTransform.position);
+    		myTransform.position = Vector3.Lerp(myTransform.position, targetPos + new Vector3(0, 3, 0), Time.deltaTime * moveSpeed);
+    		distance = Vector2.Distance( new Vector2(targetPos.x, targetPos.z), new Vector2(myTransform.position.x, myTransform.position.z));
 
     		//myTransform.position += new Vector3(0, moveAnimCurve.Evaluate( distance / totalDistance), 0) * moveAnimCurveHeightAmplifier;
 
     		yield return new WaitForEndOfFrame();
     	}
+
+        yield return new WaitForSeconds(0.1f);
+
+        for(int i = 0; i < 50; i++) {
+            GameScenario.Instance.aimLine.SetPosition(0, myTransform.position);
+            myTransform.position = Vector3.Lerp(myTransform.position, targetPos, Time.deltaTime * moveSpeed);
+            yield return new WaitForEndOfFrame();
+        }
+
+        Debug.Log("Move Ended!");
     }
 }

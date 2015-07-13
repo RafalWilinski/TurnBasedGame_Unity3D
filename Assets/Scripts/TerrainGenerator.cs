@@ -69,6 +69,10 @@ public class TerrainGenerator : MonoBehaviour {
     private void Update() {
         if(oldPerlinAmplify != perlinAmplify || oldPerlinOffset != perlinOffset || oldPerlinScale != perlinScale) {
             UpdateHexPositions();
+            
+            oldPerlinAmplify = perlinAmplify;
+            oldPerlinOffset = perlinOffset;
+            oldPerlinScale = perlinScale;
         }
     }
 
@@ -172,7 +176,7 @@ public class TerrainGenerator : MonoBehaviour {
     }
 
     public void HighlightAvailableToMoveTiles(int baseIndex, int traverseDepth, int recursionDepth) {
-        recursionDepth++;
+		recursionDepth++;
 
         hexes[baseIndex].GetComponent<HexUnit>().AvailableForMovement();
 
@@ -191,7 +195,7 @@ public class TerrainGenerator : MonoBehaviour {
                 if(baseIndex + 1 - levelWidth >= 0) HighlightAvailableToMoveTiles(baseIndex + 1 - levelWidth, traverseDepth, recursionDepth);
                 if(baseIndex + 1 + levelWidth < levelWidth * levelHeight) HighlightAvailableToMoveTiles(baseIndex + 1 + levelWidth, traverseDepth, recursionDepth);
             }
-        }
+        }  
     }
 
     public List<Transform> GetHexNeighbours(Transform hex) {

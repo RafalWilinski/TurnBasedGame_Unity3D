@@ -10,17 +10,24 @@ public class GameScenario : MonoBehaviour {
     //Referencies
     public TerrainGenerator terrainGen;
     public GameObject unitPrefab;
+    public GameObject explosionPrefab;
+    public GameObject bulletPrefab;
+    public GameObject hitPrefab;
     public CameraController camControl;
     public Camera cam;
+    public LineRenderer aimLine;
 
     //Game Settings
     public Vector3 unitSpawnOffset;
     public float turnTime;
+    public float maxAttackDistance;
     public int unitsPerTeam;
     public int energyBudget;
     public int bombReach;
     public int riseReach;
-    public int attackReach;
+    public int attackCost;
+    public int bombCost;
+    public int riseCost;
 
     //INTERFACE Referencies
     public Text timeLeftLabel;
@@ -36,6 +43,10 @@ public class GameScenario : MonoBehaviour {
     public Text unitAttackTargetHealthBackgroundLabel;
     public Text unitAttackTargetChanceToHitLabel;
 
+    public CanvasGroup toastCanvas;
+    public Text toastText;
+    public float toastShowTime;
+
     public CanvasGroup unitControllerCanvas;
     public Text energyLeftLabel;
     public Text healthLabel;
@@ -46,6 +57,15 @@ public class GameScenario : MonoBehaviour {
     public Image riseIcon;
     public Color normalColor;
     public Color activeColor;
+    public Text attackCostLabel;
+    public Text bombCostLabel;
+    public Text riseCostLabel;
+
+    public CanvasGroup victoryCanvas;
+    public Text victoryTeamText;
+
+    private float attackHitChance;
+    private bool gameStarted;
 
     //In-Game variables
     public int activePlayer;
@@ -91,13 +111,21 @@ public class GameScenario : MonoBehaviour {
     public delegate void ClearTilesSelection();
     public static event ClearTilesSelection OnClearTilesSelection;
 
+    public delegate void SelectUnit(Unit u);
+    public static event SelectUnit OnUnitSelected;
+
     #endregion
 
     void Start () {
         _instance = this;
-        GameStart();
 
         timerLabel.text = "Preparing level...";
+        riseCostLabel.text = riseCost.ToString();
+        bombCostLabel.text = bombCost.ToString();
+        attackCostLabel.text = attackCost.ToString();
+
+        GameStart();
+
         HideTimeLeftLabel();
     }
 
@@ -108,7 +136,7 @@ public class GameScenario : MonoBehaviour {
         for(int i = 0; i < teams.Count; i++) {
 
             int spawnOriginTile;
-            if(i == 0) spawnOriginTile = (int) UnityEngine.Random.Range(TerrainGenerator.Instance.levelHeight, TerrainGenerator.Instance.levelHeight * 2);
+            if(i == 0) spawnOriginTile = (int) UnityEngine.Random.Range(TerrainGenerator.Instance.levelHeight, TerrainGenerator.Instance.levelHeight * 2 - unitsPerTeam);
             else spawnOriginTile = (int) UnityEngine.Random.Range(TerrainGenerator.Instance.levelHeight * (TerrainGenerator.Instance.levelHeight - 4), TerrainGenerator.Instance.levelHeight * (TerrainGenerator.Instance.levelHeight - 1));
 
             Transform spawnOriginHex = TerrainGenerator.Instance.hexes[spawnOriginTile];
@@ -125,6 +153,7 @@ public class GameScenario : MonoBehaviour {
             }
         }
 
+        gameStarted = true;
         NextTurn();
     }
 
@@ -156,7 +185,9 @@ public class GameScenario : MonoBehaviour {
     }
 
     private void NextTurn() {
+    	aimLine.enabled = false;
 
+    	actionMode = SelectedMode.None;
     	OnClearTilesSelection();
 
         if(activePlayer == -1) {
@@ -183,7 +214,17 @@ public class GameScenario : MonoBehaviour {
 
         StartExpirationTimer();
 
+        activeUnit = 0;
         OnUnitChange(true);
+    }
+
+    public void GameOver(int teamWonIndex) {
+    	victoryCanvas.interactable = true;
+    	victoryCanvas.blocksRaycasts = true;
+    	victoryCanvas.alpha = 1;
+
+    	victoryTeamText.text = "Team "+(teamWonIndex+1) + " won!";
+    	victoryTeamText.color = teams[teamWonIndex].teamColor;
     }
 
     #endregion
@@ -211,55 +252,155 @@ public class GameScenario : MonoBehaviour {
     	unitInformationCanvas.alpha = 0;
     }
 
+    public void ShowAttackInformation(Unit unit) {
+   
+    	StopCoroutine("HideAttackInformation");
+
+    	float distance = Vector3.Distance(unit.transform.position, teams[activePlayer].units[activeUnit].transform.position);
+    	float chance = Mathf.Clamp(1 - (distance / maxAttackDistance), 0, 1) * 100;
+
+    	if (Physics.Linecast(teams[activePlayer].units[activeUnit].transform.position, unit.transform.position, 1 << 9)) {
+    		chance = -1;
+        }
+
+        attackHitChance = chance;
+        
+    	unitAttackTargetCanvas.alpha = 1;
+    	unitAttackTargetCanvas.transform.position = cam.WorldToScreenPoint(unit.transform.position);
+    	unitAttackTargetChanceToHitLabel.text = chance < 0 ? "NaN" : (chance.ToString("f2") + "%");
+    	unitAttackTargetHealthLabel.text = unit.health.ToString("f0") + " / 100";
+    	unitAttackTargetHealthBackgroundLabel.text = unit.health.ToString("f0") + " / 100";
+    	unitAttackTargetHealthLabel.GetComponent<RectTransform>().rect.Set(0, 0, unit.health, 40);
+
+    	StartCoroutine("HideAttackInformation");
+    }
+
+    IEnumerator HideAttackInformation() {
+    	yield return new WaitForSeconds(0.03f);
+    	unitAttackTargetCanvas.alpha = 0;
+    }
+
     public void ProcessClick(Transform target) {
+    	if(gameStarted) {
+	    	int currentUnitIndex = TerrainGenerator.Instance.FindTileIndex(teams[activePlayer].units[activeUnit].tileOwned);
+	    	int targetIndex = 0;
 
-    	int currentUnitIndex = TerrainGenerator.Instance.FindTileIndex(teams[activePlayer].units[activeUnit].tileOwned);
-    	int targetIndex = 0;
+	    	if(target.gameObject.name.Contains("Hex")) targetIndex = TerrainGenerator.Instance.FindTileIndex(target);
+	    	else if(target.gameObject.name.Contains("Unit")) {
+	    		Debug.Log("Clicked unit, finding owned tile instead.");
+	    		targetIndex = TerrainGenerator.Instance.FindTileIndex(target.GetComponent<Unit>().tileOwned);
+	    	}
 
-    	if(target.gameObject.name.Contains("Hex")) targetIndex = TerrainGenerator.Instance.FindTileIndex(target);
-    	else if(target.gameObject.name.Contains("Unit")) {
-    		Debug.Log("Clicked unit, finding owned tile instead.");
-    		targetIndex = TerrainGenerator.Instance.FindTileIndex(target.GetComponent<Unit>().tileOwned);
-    	}
+	    	if(!EventSystem.current.IsPointerOverGameObject()) {
+		        if(teams[activePlayer].logicType == Team.Logic.Human) {
+		        	switch(actionMode) {
+		        		case(SelectedMode.Move):
+		        			aimLine.enabled = false;
+		        			if(target.gameObject.name.Contains("Hex") && target.GetComponent<HexUnit>().isAvailableForMovement) {
+		        				teams[activePlayer].units[activeUnit].GetComponent<Unit>().MoveToTile(target);
+		        				OnClearTilesSelection();
+		        			} else {
+	//	        				Debug.Log("Selected tile is not available or too far!");
+		        				ShowToast("Not Enough energy!");
+		        			}
+		        			break;
 
-    	if(!EventSystem.current.IsPointerOverGameObject()) {
-	        if(teams[activePlayer].logicType == Team.Logic.Human) {
-	        	switch(actionMode) {
-	        		case(SelectedMode.Move):
-	        			if(target.gameObject.name.Contains("Hex") && target.GetComponent<HexUnit>().isAvailableForMovement) {
-	        				teams[activePlayer].units[activeUnit].GetComponent<Unit>().MoveToTile(target);
-	        				OnClearTilesSelection();
-	        			} else {
-//	        				Debug.Log("Selected tile is not available or too far!");
-	        			}
-	        			break;
+		        		case(SelectedMode.Attack):
+		        			OnClearTilesSelection();
+		        			if(teams[activePlayer].units[activeUnit].energyLeft >= attackCost) {
+			        			Unit targetUnit = TerrainGenerator.Instance.hexes[targetIndex].GetComponent<HexUnit>().Owner;
+			        			if(targetUnit != null) {
 
-	        		case(SelectedMode.Attack):
-	        			OnClearTilesSelection();
-	        			break;
+			        				bool isHit = (UnityEngine.Random.Range(0, 100) < attackHitChance);
+			        				GameObject b = Instantiate(bulletPrefab, teams[activePlayer].units[activeUnit].transform.position, Quaternion.identity) as GameObject;
+			        				b.GetComponent<Bullet>().SetTarget(targetUnit.transform, isHit);
 
-	        		case(SelectedMode.Bomb):
-	        			OnClearTilesSelection();
+				        			if(isHit) {
+				        				Debug.Log("Hit! Damage: "+teams[activePlayer].units[activeUnit].attackPower);
+				        				targetUnit.ReceiveDamage(teams[activePlayer].units[activeUnit].attackPower);
+				        			}
+				        			else { //MISS!
+				        				Debug.Log("Miss!");
+				        			}
 
-	        			if(TerrainGenerator.Instance.CalculatePathDistance(currentUnitIndex, targetIndex, 0) <= bombReach) {
+				        			teams[activePlayer].units[activeUnit].energyLeft -= attackCost;
+				        		}
+				        	}
+				        	else {
+				        		ShowToast("Not Enough energy!");
+				        	}
 
-	        			}
+		        			break;
 
-	        			break;
+		        		case(SelectedMode.Bomb):
+		        			Debug.Log("Bomb!");
+		        			OnClearTilesSelection();
+		        			aimLine.enabled = false;
 
-	        		case(SelectedMode.Rise):
-	        			OnClearTilesSelection();
-	        			break;
+		        			if(teams[activePlayer].units[activeUnit].energyLeft >= bombCost) {
+			        			if(TerrainGenerator.Instance.CalculatePathDistance(currentUnitIndex, targetIndex, 0) <= bombReach) {
+			        				Transform epicenter = TerrainGenerator.Instance.hexes[targetIndex];
+			        				epicenter.GetComponent<HexUnit>().Rise(-0.05f);
 
-	        		default:
-	        			break;
-	        	}
-	        }
-	        //This player is controller by AI!
-	        else {
+                                    if(epicenter.GetComponent<HexUnit>().Owner != null) epicenter.GetComponent<HexUnit>().Owner.ReceiveDamage(15);
 
-	        }
-	    }
+			        				foreach(Transform t in TerrainGenerator.Instance.GetHexNeighbours(epicenter)) {
+                                        HexUnit hex = t.GetComponent<HexUnit>();
+
+			        					hex.Rise(UnityEngine.Random.Range(-0.03f, -0.02f));
+                                        if(hex.Owner != null) hex.Owner.ReceiveDamage(15);
+			        				}
+
+			        				Instantiate(explosionPrefab, new Vector3(0, 2, 0) + TerrainGenerator.Instance.hexes[targetIndex].position, Quaternion.identity);
+			        				teams[activePlayer].units[activeUnit].energyLeft -= bombCost;
+			        			}
+			        			else {
+			        				ShowToast("Too far!");
+			        			}
+			        		}
+			        		else {
+			        			ShowToast("Not Enough energy!");
+			        		}
+
+		        			break;
+
+		        		case(SelectedMode.Rise):
+		        			Debug.Log("Rise!");
+		        			OnClearTilesSelection();
+		        			aimLine.enabled = false;
+		        			
+		        			if(teams[activePlayer].units[activeUnit].energyLeft >= bombCost) {
+			        			if(TerrainGenerator.Instance.CalculatePathDistance(currentUnitIndex, targetIndex, 0) <= riseReach) {
+			        				Transform epicenter = TerrainGenerator.Instance.hexes[targetIndex];
+			        				epicenter.GetComponent<HexUnit>().Rise(0.05f);
+
+			        				foreach(Transform t in TerrainGenerator.Instance.GetHexNeighbours(epicenter)) {
+			        					t.GetComponent<HexUnit>().Rise(UnityEngine.Random.Range(0.03f, 0.02f));
+			        				}
+
+			        				teams[activePlayer].units[activeUnit].energyLeft -= bombCost;
+			        			}
+			        			else {
+			        				ShowToast("Too far!");
+			        			}
+			        		}
+			        		else {
+			        			ShowToast("Not Enough energy!");
+			        		}
+		        			break;
+
+		        		default:
+		        			break;
+		        	}
+		        }
+		        //This player is controller by AI!
+		        else {
+
+		        }
+		    }
+
+		    OnUnitChange(false);
+		}
     }
 
     public void OnModeUpdated() {
@@ -267,14 +408,16 @@ public class GameScenario : MonoBehaviour {
         OnClearTilesSelection();
 
         int activeUnitTile = TerrainGenerator.Instance.FindTileIndex(teams[activePlayer].units[activeUnit].tileOwned);
-
+        
+        HighlightIcon(actionMode);
+        
         switch(actionMode) {
     		case(SelectedMode.Move):
     			TerrainGenerator.Instance.HighlightAvailableToMoveTiles(activeUnitTile, teams[activePlayer].units[activeUnit].energyLeft + 1, 0);
     			break;
 
     		case(SelectedMode.Attack):
-    			TerrainGenerator.Instance.HighlightAvailableToMoveTiles(activeUnitTile, attackReach + 1, 0);
+    			aimLine.enabled = true;
     			break;
 
     		case(SelectedMode.Bomb):
@@ -301,22 +444,38 @@ public class GameScenario : MonoBehaviour {
     }
 
     public void SelectAttack() {
-        actionMode = SelectedMode.Attack;
+    	if(teams[activePlayer].units[activeUnit].energyLeft >= attackCost)
+        	actionMode = SelectedMode.Attack;
         OnModeUpdated();
     }
 
     public void SelectBomb() {
-        actionMode = SelectedMode.Bomb;
+    	if(teams[activePlayer].units[activeUnit].energyLeft >= bombCost)
+        	actionMode = SelectedMode.Bomb;
         OnModeUpdated();
     }
 
     public void SelectRise() {
-        actionMode = SelectedMode.Rise;
+    	if(teams[activePlayer].units[activeUnit].energyLeft >= riseCost)
+        	actionMode = SelectedMode.Rise;
         OnModeUpdated();
     }
 
     public void EndTurn() {
     	NextTurn();
+    }
+    
+    private void HighlightIcon(SelectedMode mode) {
+        
+        attackIcon.color = normalColor;
+        bombIcon.color = normalColor;
+        moveIcon.color = normalColor;
+        riseIcon.color = normalColor;
+        
+        if(mode == SelectedMode.Attack) attackIcon.color = activeColor;
+        else if(mode == SelectedMode.Move) moveIcon.color = activeColor;
+        else if(mode == SelectedMode.Bomb) bombIcon.color = activeColor;
+        else if(mode == SelectedMode.Rise) riseIcon.color = activeColor;
     }
 
     #endregion
@@ -324,16 +483,34 @@ public class GameScenario : MonoBehaviour {
     #region UnitManagement
 
     public void OnUnitChange(bool flyOverUnit = true) {
-    	Unit u = teams[activePlayer].units[activeUnit];
-        if(flyOverUnit) camControl.FlyOverPosition(u.transform.position);
 
-        attackLabel.text = u.attackPower.ToString();
-        healthLabel.text = u.health.ToString() + " / 100";
-        energyLeftLabel.text = u.energyLeft.ToString();
+    	if(teams[0].units.Count == 0) { //Team 2 wins
+    		gameStarted = false;
 
-        if(u.energyLeft > 1) energyLeftLabel.color = Color.white;
-        else if(u.energyLeft == 1) energyLeftLabel.color = Color.yellow;
-        else if(u.energyLeft == 0) energyLeftLabel.color = Color.red;
+    		GameOver(1);
+    	}
+    	else if(teams[1].units.Count == 0) { //Team 1 wins
+    		gameStarted = false;
+
+    		GameOver(0);
+    	}
+    	else {
+
+	    	Unit u = teams[activePlayer].units[activeUnit];
+	        if(flyOverUnit) camControl.FlyOverPosition(u.transform.position);
+
+	        OnUnitSelected(u);
+
+	        attackLabel.text = u.attackPower.ToString();
+	        healthLabel.text = u.health.ToString() + " / 100";
+	        energyLeftLabel.text = u.energyLeft.ToString();
+
+	        if(u.energyLeft > 1) energyLeftLabel.color = Color.white;
+	        else if(u.energyLeft == 1) energyLeftLabel.color = Color.yellow;
+	        else if(u.energyLeft == 0) energyLeftLabel.color = Color.red;
+
+	        aimLine.SetPosition(0, u.transform.position);
+	    }
     }
 
     public void NextUnit() {
@@ -345,7 +522,7 @@ public class GameScenario : MonoBehaviour {
     		activeUnit = 0;
     	}
 
-    	OnUnitChange();
+    	OnUnitChange(false);
     }
 
     public void PreviousUnit() {
@@ -357,7 +534,7 @@ public class GameScenario : MonoBehaviour {
     		activeUnit = teams[activePlayer].units.Count - 1;
     	}
 
-    	OnUnitChange();
+    	OnUnitChange(false);
     }
 
     #endregion
@@ -391,5 +568,35 @@ public class GameScenario : MonoBehaviour {
 
         CreateGameTeams();
     }
+
+    public void ShowToast(string message) {
+    	toastText.text = message;
+    	StopCoroutine("ToastAnimation");
+    	StartCoroutine("ToastAnimation");
+    }
+
+    public Team GetOpponent() {
+    	if(activePlayer == 1) return teams[0];
+    	else return teams[1];
+    }
+
+    IEnumerator ToastAnimation() {
+    	for(int i = 0; i < 25; i++) {
+    		toastCanvas.alpha = 0.04f * i;
+    		yield return new WaitForEndOfFrame();
+    	}
+
+    	yield return new WaitForSeconds(toastShowTime);
+
+    	for(int i = 0; i < 25; i++) {
+    		toastCanvas.alpha = 1 - (0.04f * i);
+    		yield return new WaitForEndOfFrame();
+    	}
+    }
+
+    public void RestartScene() {
+    	Application.LoadLevel(Application.loadedLevel);
+    }
+
     #endregion
 }

@@ -6,7 +6,7 @@ public class HexUnit : MonoBehaviour {
 	public Color mouseOverColor;
 	public Color availableColor;
 	public Color halfHighlightColor;
-	public Color availableToMoveColor;
+	public float tintFactor;
 	public float fadeDelay;
 
 	private bool isReserved = false;
@@ -97,11 +97,17 @@ public class HexUnit : MonoBehaviour {
 		}
 	}
 
-	public void AvailableForMovement() {
+	public bool AvailableForMovement() {
 		if(!isReserved) {
+			if(isAvailableForMovement) return false;
+
 			isAvailableForMovement = true;
-			myRenderer.material.color = availableToMoveColor;
+			myRenderer.material.color = new Color(GameScenario.Instance.teams[GameScenario.Instance.activePlayer].teamColor.r + ((1.0f - GameScenario.Instance.teams[GameScenario.Instance.activePlayer].teamColor.r) * tintFactor), 
+				GameScenario.Instance.teams[GameScenario.Instance.activePlayer].teamColor.g + ((1.0f - GameScenario.Instance.teams[GameScenario.Instance.activePlayer].teamColor.g) * tintFactor), 
+				GameScenario.Instance.teams[GameScenario.Instance.activePlayer].teamColor.b + ((1.0f - GameScenario.Instance.teams[GameScenario.Instance.activePlayer].teamColor.b) * tintFactor), 1);
+			return true;
 		}
+		else return true;
 	}
 
 	private void DeselectTile() {
@@ -113,7 +119,9 @@ public class HexUnit : MonoBehaviour {
 		if(isReserved)
 			myRenderer.material.color = GameScenario.Instance.teams[hexOwner.teamNumber].teamColor;
 		else if(isAvailableForMovement) 
-			myRenderer.material.color = availableToMoveColor;
+			myRenderer.material.color = new Color(GameScenario.Instance.teams[GameScenario.Instance.activePlayer].teamColor.r + (1.0f - GameScenario.Instance.teams[GameScenario.Instance.activePlayer].teamColor.r) * tintFactor, 
+				GameScenario.Instance.teams[GameScenario.Instance.activePlayer].teamColor.g + (1.0f - GameScenario.Instance.teams[GameScenario.Instance.activePlayer].teamColor.g) * tintFactor, 
+				GameScenario.Instance.teams[GameScenario.Instance.activePlayer].teamColor.b + (1.0f - GameScenario.Instance.teams[GameScenario.Instance.activePlayer].teamColor.b) * tintFactor, 1);
 		else if(isHalfHighlight) 
 			myRenderer.material.color = halfHighlightColor;
 		else 
@@ -149,7 +157,8 @@ public class HexUnit : MonoBehaviour {
 
 	IEnumerator RiseCoroutine() {
 		for(int i = 0; i < 50; i++) {
-			myTransform.localScale = new Vector3(myTransform.localScale.x, myTransform.localScale.y + riseAmount, myTransform.localScale.z);
+			myTransform.localPosition = new Vector3(myTransform.localPosition.x, myTransform.localPosition.y + riseAmount, myTransform.localPosition.z);
+			if(Owner != null) Owner.ChangeYAxisOffset();
 			yield return new WaitForEndOfFrame();
 		}
 	}
