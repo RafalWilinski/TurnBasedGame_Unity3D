@@ -259,7 +259,8 @@ public class GameScenario : MonoBehaviour {
     public float ComputeAttackChance(Transform attacker, Transform victim) {
         float distance = Vector3.Distance(attacker.position, victim.position);
     	float chance = Mathf.Clamp(1 - (distance / maxAttackDistance), 0, 1) * 100;
-
+        attackHitChance = chance;
+        
     	if (Physics.Linecast(attacker.position, victim.position, 1 << 9)) {
     		chance = -1;
         }
@@ -274,7 +275,6 @@ public class GameScenario : MonoBehaviour {
     	StopCoroutine("HideAttackInformation");
 
         float chance = ComputeAttackChance(teams[activePlayer].units[activeUnit].transform, unit.transform);
-        attackHitChance = chance;
         
     	unitAttackTargetCanvas.alpha = 1;
     	unitAttackTargetCanvas.transform.position = cam.WorldToScreenPoint(unit.transform.position);
@@ -284,6 +284,12 @@ public class GameScenario : MonoBehaviour {
     	unitAttackTargetHealthLabel.GetComponent<RectTransform>().rect.Set(0, 0, unit.health, 40);
 
     	StartCoroutine("HideAttackInformation");
+    }
+    
+    IEnumerator HideAttackInformationLonger() {
+        
+        yield return new WaitForSeconds(1f);
+        unitAttackTargetCanvas.alpha = 0;
     }
 
     IEnumerator HideAttackInformation() {
@@ -295,6 +301,8 @@ public class GameScenario : MonoBehaviour {
         bool isHit = (UnityEngine.Random.Range(0, 100) < attackHitChance);
 		GameObject b = Instantiate(bulletPrefab, teams[activePlayer].units[activeUnit].transform.position, Quaternion.identity) as GameObject;
 		b.GetComponent<Bullet>().SetTarget(targetUnit.transform, isHit);
+        
+        
 
 		if(isHit) {
 			Debug.Log("Hit! Damage: "+teams[activePlayer].units[activeUnit].attackPower);

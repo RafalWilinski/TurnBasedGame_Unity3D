@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 public class AIPlayer : MonoBehaviour {
 	
-	public float decisionWaitTime = 3.0f;
+	public float decisionWaitTime = 0.5f;
 	
 	private string logPrefix = "[AI] ";
 	private static AIPlayer _instance;
@@ -14,6 +14,7 @@ public class AIPlayer : MonoBehaviour {
 		get { 
 			if(_instance == null) {
 				GameObject g = new GameObject();
+				g.name = "AI_System";
 				_instance = g.AddComponent<AIPlayer>() as AIPlayer;
 			}
 			return _instance; 
@@ -43,11 +44,16 @@ public class AIPlayer : MonoBehaviour {
 	}
 	
 	IEnumerator Behave() {
-
-		foreach(Unit target in GameScenario.Instance.GetOpponent().units) { // Check shoot targets
-			yield return new WaitForSeconds(decisionWaitTime / 2f);
-			if(GameScenario.Instance.ComputeAttackChance(controlledUnit.transform, target.transform) > 50f) { //Shoot for real if chance is bigger than 50%
+		yield return new WaitForSeconds(decisionWaitTime);
+		
+		//foreach(Unit target in GameScenario.Instance.GetOpponent().units) { // This caused errors, list was changed while enumeration
+		for(int i = 0; i < GameScenario.Instance.GetOpponent().units.Count; i++) { // Check shoot targets
+			Unit target = GameScenario.Instance.GetOpponent().units[i];
 			
+			if(GameScenario.Instance.ComputeAttackChance(controlledUnit.transform, target.transform) > 50f) { //Shoot for real if chance is bigger than 50%
+				
+				yield return new WaitForSeconds(decisionWaitTime / 2f);
+				
 				Log("Chance bigger than 50%, shooting!");
 				if(controlledUnit.energyLeft >= GameScenario.Instance.attackCost) {
 					GameScenario.Instance.Attack(target);
