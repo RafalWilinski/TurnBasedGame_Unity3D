@@ -137,7 +137,7 @@ public class GameScenario : MonoBehaviour {
 
             int spawnOriginTile;
             if(i == 0) spawnOriginTile = (int) UnityEngine.Random.Range(TerrainGenerator.Instance.levelHeight, TerrainGenerator.Instance.levelHeight * 2 - unitsPerTeam);
-            else spawnOriginTile = (int) UnityEngine.Random.Range(TerrainGenerator.Instance.levelHeight * (TerrainGenerator.Instance.levelHeight - 4), TerrainGenerator.Instance.levelHeight * (TerrainGenerator.Instance.levelHeight - 1));
+            else spawnOriginTile = (int) UnityEngine.Random.Range(TerrainGenerator.Instance.levelHeight * (TerrainGenerator.Instance.levelHeight - 4 + unitsPerTeam), TerrainGenerator.Instance.levelHeight * (TerrainGenerator.Instance.levelHeight - 1 - unitsPerTeam));
 
             Transform spawnOriginHex = TerrainGenerator.Instance.hexes[spawnOriginTile];
 
@@ -147,7 +147,7 @@ public class GameScenario : MonoBehaviour {
 
                 Unit u = ((GameObject) Instantiate(unitPrefab, spawnPos + unitSpawnOffset, Quaternion.identity)).GetComponent<Unit>();
 
-                u.AssignValues(i, spawnOriginHex);
+                u.AssignValues(i, spawnOriginHex, i * unitsPerTeam + j);
 
                 teams[i].units.Add(u);
             }
@@ -187,7 +187,6 @@ public class GameScenario : MonoBehaviour {
     private void NextTurn() {
     	aimLine.enabled = false;
 
-    	actionMode = SelectedMode.None;
     	OnClearTilesSelection();
 
         if(activePlayer == -1) {
@@ -216,6 +215,11 @@ public class GameScenario : MonoBehaviour {
 
         activeUnit = 0;
         OnUnitChange(true);
+        
+        actionMode = SelectedMode.None;
+        OnModeUpdated();
+        
+        if(teams[activePlayer].logicType == Team.Logic.AI) AIPlayer.Instance.PosessControl(teams[activePlayer].units[0]);
     }
 
     public void GameOver(int teamWonIndex) {
@@ -251,18 +255,25 @@ public class GameScenario : MonoBehaviour {
     	yield return new WaitForSeconds(0.03f);
     	unitInformationCanvas.alpha = 0;
     }
+    
+    public float ComputeAttackChance(Transform attacker, Transform victim) {
+        float distance = Vector3.Distance(attacker.position, victim.position);
+    	float chance = Mathf.Clamp(1 - (distance / maxAttackDistance), 0, 1) * 100;
+
+    	if (Physics.Linecast(attacker.position, victim.position, 1 << 9)) {
+    		chance = -1;
+        }
+        
+        if(actionMode == SelectedMode.Bomb) chance = 100;
+        
+        return chance;
+    }
 
     public void ShowAttackInformation(Unit unit) {
    
     	StopCoroutine("HideAttackInformation");
 
-    	float distance = Vector3.Distance(unit.transform.position, teams[activePlayer].units[activeUnit].transform.position);
-    	float chance = Mathf.Clamp(1 - (distance / maxAttackDistance), 0, 1) * 100;
-
-    	if (Physics.Linecast(teams[activePlayer].units[activeUnit].transform.position, unit.transform.position, 1 << 9)) {
-    		chance = -1;
-        }
-
+        float chance = ComputeAttackChance(teams[activePlayer].units[activeUnit].transform, unit.transform);
         attackHitChance = chance;
         
     	unitAttackTargetCanvas.alpha = 1;
@@ -278,6 +289,22 @@ public class GameScenario : MonoBehaviour {
     IEnumerator HideAttackInformation() {
     	yield return new WaitForSeconds(0.03f);
     	unitAttackTargetCanvas.alpha = 0;
+    }
+    
+    public void Attack(Unit targetUnit) {
+        bool isHit = (UnityEngine.Random.Range(0, 100) < attackHitChance);
+		GameObject b = Instantiate(bulletPrefab, teams[activePlayer].units[activeUnit].transform.position, Quaternion.identity) as GameObject;
+		b.GetComponent<Bullet>().SetTarget(targetUnit.transform, isHit);
+
+		if(isHit) {
+			Debug.Log("Hit! Damage: "+teams[activePlayer].units[activeUnit].attackPower);
+			targetUnit.ReceiveDamage(teams[activePlayer].units[activeUnit].attackPower);
+		}
+		else { //MISS!
+			ShowToast("Miss!");
+		}
+
+		teams[activePlayer].units[activeUnit].energyLeft -= attackCost;
     }
 
     public void ProcessClick(Transform target) {
@@ -299,8 +326,10 @@ public class GameScenario : MonoBehaviour {
 		        			if(target.gameObject.name.Contains("Hex") && target.GetComponent<HexUnit>().isAvailableForMovement) {
 		        				teams[activePlayer].units[activeUnit].GetComponent<Unit>().MoveToTile(target);
 		        				OnClearTilesSelection();
+                                
+                                actionMode = SelectedMode.None;
+                                OnModeUpdated();
 		        			} else {
-	//	        				Debug.Log("Selected tile is not available or too far!");
 		        				ShowToast("Not Enough energy!");
 		        			}
 		        			break;
@@ -310,20 +339,7 @@ public class GameScenario : MonoBehaviour {
 		        			if(teams[activePlayer].units[activeUnit].energyLeft >= attackCost) {
 			        			Unit targetUnit = TerrainGenerator.Instance.hexes[targetIndex].GetComponent<HexUnit>().Owner;
 			        			if(targetUnit != null) {
-
-			        				bool isHit = (UnityEngine.Random.Range(0, 100) < attackHitChance);
-			        				GameObject b = Instantiate(bulletPrefab, teams[activePlayer].units[activeUnit].transform.position, Quaternion.identity) as GameObject;
-			        				b.GetComponent<Bullet>().SetTarget(targetUnit.transform, isHit);
-
-				        			if(isHit) {
-				        				Debug.Log("Hit! Damage: "+teams[activePlayer].units[activeUnit].attackPower);
-				        				targetUnit.ReceiveDamage(teams[activePlayer].units[activeUnit].attackPower);
-				        			}
-				        			else { //MISS!
-				        				Debug.Log("Miss!");
-				        			}
-
-				        			teams[activePlayer].units[activeUnit].energyLeft -= attackCost;
+    			        			Attack(targetUnit);
 				        		}
 				        	}
 				        	else {
@@ -446,18 +462,21 @@ public class GameScenario : MonoBehaviour {
     public void SelectAttack() {
     	if(teams[activePlayer].units[activeUnit].energyLeft >= attackCost)
         	actionMode = SelectedMode.Attack;
+        else ShowToast("Not enough energy!");
         OnModeUpdated();
     }
 
     public void SelectBomb() {
     	if(teams[activePlayer].units[activeUnit].energyLeft >= bombCost)
         	actionMode = SelectedMode.Bomb;
+        else ShowToast("Not enough energy!");
         OnModeUpdated();
     }
 
     public void SelectRise() {
     	if(teams[activePlayer].units[activeUnit].energyLeft >= riseCost)
         	actionMode = SelectedMode.Rise;
+        else ShowToast("Not enough energy!");
         OnModeUpdated();
     }
 
@@ -481,9 +500,21 @@ public class GameScenario : MonoBehaviour {
     #endregion
     
     #region UnitManagement
+    
+    private void Update() {
+        if(gameStarted) {
+            if(Input.GetKeyUp(KeyCode.A)) {
+    	    	PreviousUnit();
+    	    }
+    	    else if(Input.GetKeyUp(KeyCode.D)) {
+    	    	NextUnit();
+    	    }
+        }
+    }
 
     public void OnUnitChange(bool flyOverUnit = true) {
-
+        aimLine.enabled = false;
+        
     	if(teams[0].units.Count == 0) { //Team 2 wins
     		gameStarted = false;
 
@@ -510,10 +541,14 @@ public class GameScenario : MonoBehaviour {
 	        else if(u.energyLeft == 0) energyLeftLabel.color = Color.red;
 
 	        aimLine.SetPosition(0, u.transform.position);
+            
 	    }
     }
 
     public void NextUnit() {
+        actionMode = SelectedMode.None;
+        OnModeUpdated();
+        
     	OnClearTilesSelection();
     	if(activeUnit < teams[activePlayer].units.Count - 1) {
     		activeUnit++;
@@ -523,6 +558,8 @@ public class GameScenario : MonoBehaviour {
     	}
 
     	OnUnitChange(false);
+        
+        if(teams[activePlayer].logicType == Team.Logic.AI) AIPlayer.Instance.PosessControl(teams[activePlayer].units[activeUnit]);
     }
 
     public void PreviousUnit() {

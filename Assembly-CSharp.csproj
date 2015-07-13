@@ -59,6 +59,7 @@
      <Compile Include="Assets\SSAO Pro\Demo\Scripts\DemoUI.cs" />
      <Compile Include="Assets\SSAO Pro\Demo\Scripts\RotateAround.cs" />
      <Compile Include="Assets\SSAO Pro\Scripts\SSAOPro.cs" />
+     <Compile Include="Assets\Scripts\AIPlayer.cs" />
      <Compile Include="Assets\Scripts\Bullet.cs" />
      <Compile Include="Assets\Scripts\CameraController.cs" />
      <Compile Include="Assets\Scripts\Explosion.cs" />
@@ -66,7 +67,9 @@
      <Compile Include="Assets\Scripts\HexUnit.cs" />
      <Compile Include="Assets\Scripts\HitExplosion.cs" />
      <Compile Include="Assets\Scripts\RaySelector.cs" />
+     <Compile Include="Assets\Scripts\SetTimescale.cs" />
      <Compile Include="Assets\Scripts\TerrainGenerator.cs" />
+     <Compile Include="Assets\Scripts\TutorialHover.cs" />
      <Compile Include="Assets\Scripts\Unit.cs" />
      <None Include="Assets\Standard Assets\Effects\GlassRefraction\Shaders\GlassStainedBumpDistort.shader" />
      <None Include="Assets\Standard Assets\Effects\ImageEffects\Shaders\_BloomAndFlares\BlendOneOne.shader" />

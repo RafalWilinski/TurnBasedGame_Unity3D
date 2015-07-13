@@ -4,7 +4,8 @@ using System.Collections;
 public class Unit : MonoBehaviour {
 
 	public Vector3 unitPlaceOffset = new Vector3(0, 3.5f, 0);
-
+    
+    public int unitNumber;
     public int teamNumber;
     public int energyLeft;
     public int attackPower;
@@ -46,7 +47,8 @@ public class Unit : MonoBehaviour {
         myTransform.position = tileOwned.position + unitPlaceOffset;
     }
 
-    public void AssignValues(int team, Transform tile) {
+    public void AssignValues(int team, Transform tile, int no) {
+        unitNumber = no;
         int retryCount = 0;
 
         myTransform = transform;
@@ -98,6 +100,8 @@ public class Unit : MonoBehaviour {
     	if(health <= 0) {
             tileOwned.GetComponent<HexUnit>().FreeHex();
     		GameScenario.Instance.teams[teamNumber].units.Remove(this);
+            
+            StartCoroutine("Fade");
     	}
 
     	GameScenario.Instance.OnUnitChange(false);
@@ -112,7 +116,16 @@ public class Unit : MonoBehaviour {
         myRenderer = GetComponent<Renderer>();
         myRenderer.material.color = GameScenario.Instance.teams[teamNumber].teamColor;
     }
-
+    
+    IEnumerator Fade() {
+        for(int i = 0; i < 100; i++) {
+            transform.Translate(Vector3.down * Time.deltaTime * 0.25f);
+            yield return new WaitForEndOfFrame();
+        }
+        
+        Destroy(this.gameObject);
+    }
+    
     IEnumerator MoveToTarget(Vector3 targetPos) {
     	Debug.Log("Moving to target "+targetPos);
     	float totalDistance = Vector3.Distance(targetPos, myTransform.position);

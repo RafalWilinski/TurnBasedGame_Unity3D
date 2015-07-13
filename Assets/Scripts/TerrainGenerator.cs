@@ -38,6 +38,8 @@ public class TerrainGenerator : MonoBehaviour {
         oldPerlinOffset = perlinOffset;
         oldPerlinAmplify = perlinAmplify;
         oldPerlinScale = perlinScale;
+        
+        if(perlinOffset == Vector2.zero) perlinOffset = new Vector2(Random.Range(0,100), Random.Range(0, 100));
 
         hexes = new Transform[levelHeight * levelWidth];
 
@@ -85,6 +87,23 @@ public class TerrainGenerator : MonoBehaviour {
 
         Debug.Log("No next free hex found!");
         return null;
+    }
+    
+    public Transform GetHexAvailableClosestToPos(Vector3 pos) {
+        float minDistance = 100000f;
+        int minIndex = 0;
+        for(int i = 0; i < levelHeight * levelWidth; i++) {
+            HexUnit h = hexes[i].GetComponent<HexUnit>();
+            if(h.isAvailableForMovement) {
+                float distance = Vector3.Distance(hexes[i].position, pos);
+                if(distance < minDistance) {
+                    minIndex = i;
+                    minDistance = distance;
+                }
+            }
+        }
+        
+        return hexes[minIndex];
     }
 
     public int FindTileIndex(Transform tile) {
