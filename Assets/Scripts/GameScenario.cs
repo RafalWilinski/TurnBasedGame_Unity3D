@@ -131,6 +131,16 @@ public class GameScenario : MonoBehaviour {
 
     
     #region Turns
+    
+    public void IsPlayerOneAI(bool isAi) {
+        if(isAi) teams[0].logicType = Team.Logic.AI;
+        else teams[0].logicType = Team.Logic.Human;
+    }
+    
+    public void IsPlayerTwoAI(bool isAi) {
+        if(isAi) teams[1].logicType = Team.Logic.AI;
+        else teams[1].logicType = Team.Logic.Human;
+    }
 
     private void CreateGameTeams() {
         for(int i = 0; i < teams.Count; i++) {
