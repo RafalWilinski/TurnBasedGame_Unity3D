@@ -239,6 +239,13 @@ public class GameScenario : MonoBehaviour {
 
     	victoryTeamText.text = "Team "+(teamWonIndex+1) + " won!";
     	victoryTeamText.color = teams[teamWonIndex].teamColor;
+        
+        StartCoroutine("StopTimeAfterDelay");
+    }
+    
+    IEnumerator StopTimeAfterDelay() {
+        yield return new WaitForSeconds(2f);
+        Time.timeScale = 0;
     }
 
     #endregion
